@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         if ($conn) {
             // Prepare a statement to prevent SQL injection
-            $sql = "SELECT id, first_name, password, is_verified, user_rules FROM users WHERE email = ? LIMIT 1";
+            $sql = "SELECT id, first_name, password, is_verified, user_rules, profile_image FROM users WHERE email = ? LIMIT 1";
 
             if ($stmt = $conn->prepare($sql)) {
                 $stmt->bind_param("s", $email);
@@ -43,6 +43,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             $_SESSION['user_id']    = $user['id'];
                             $_SESSION['first_name'] = $user['first_name'];
                             $_SESSION['user_rules'] = $user['user_rules']; // store role/permissions
+                            $_SESSION['profile_image'] = $user['profile_image']; // store image path
+
+                            
+                            
 
                             // Redirect to the user dashboard or home page
                             header("location: dashboard.php");

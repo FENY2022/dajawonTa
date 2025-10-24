@@ -298,7 +298,27 @@ $allowed_pages = [
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <img src="https://i.pravatar.cc/150?u=<?php echo htmlspecialchars($_SESSION['user_id']); ?>" alt="User Avatar" class="h-10 w-10 rounded-full object-cover">
+                    <?php
+                    $avatar_src = 'https://i.pravatar.cc/150?u=' . urlencode($_SESSION['user_id'] ?? 'guest');
+
+                    if (!empty($_SESSION['profile_image'])) {
+                        // sanitize filename to avoid path traversal
+                        $profile_image = $_SESSION['profile_image'];
+                        $filename = basename($profile_image);
+
+                        // server side path to the uploads folder
+                        $local_path = __DIR__ . '/content/uploads/profile_pictures/' . $filename;
+                        $web_path = 'content/uploads/profile_pictures/' . $filename;
+
+                        // If the file exists in the uploads folder, use that. Otherwise, if the stored value looks like a URL or absolute path, use it as-is.
+                        if (file_exists($local_path)) {
+                            $avatar_src = $web_path;
+                        } elseif (preg_match('#^(https?://|/)#', $profile_image)) {
+                            $avatar_src = $profile_image;
+                        }
+                    }
+                    ?>
+                    <img src="<?php echo htmlspecialchars($avatar_src); ?>" alt="User Avatar" class="h-10 w-10 rounded-full object-cover">
                     <div>
                         <h4 class="font-semibold text-sm text-gray-700"><?php echo htmlspecialchars($_SESSION['first_name'] ?? 'User'); ?></h4>
                         <p class="text-xs text-gray-500"><?php echo getRoleName($user_role); ?></p>

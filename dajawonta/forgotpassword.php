@@ -12,7 +12,7 @@ $messageType = 'error'; // Can be 'error' or 'success'
 // --- Function to send reset email ---
 function sendResetEmail($email, $firstName, $resetToken) {
     // IMPORTANT: Update this URL to your actual domain or local project path
-    $resetLink = 'http://localhost/dajawonta/resetpassword.php?token=' . urlencode($resetToken);
+    $resetLink = 'http://localhost/dajawonTa/dajawonta/resetpassword.php?token=' . urlencode($resetToken);
 
     $subject = 'DajawonTa Password Reset Request';
     $emailMessage = "Hello " . htmlspecialchars($firstName) . ",\n\n";
