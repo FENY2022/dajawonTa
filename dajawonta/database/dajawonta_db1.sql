@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 24, 2025 at 08:05 AM
+-- Generation Time: Oct 11, 2025 at 12:25 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -28,14 +28,14 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `bookings` (
-  `id` int(11) NOT NULL,
-  `provider_id` int(11) NOT NULL,
-  `customer_name` varchar(255) NOT NULL,
-  `customer_email` varchar(255) NOT NULL,
-  `customer_phone` varchar(50) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `customer_name` varchar(100) NOT NULL,
+  `contact_number` varchar(20) DEFAULT NULL,
+  `service_id` int(11) NOT NULL,
   `booking_date` date NOT NULL,
   `booking_time` time NOT NULL,
-  `booking_status` varchar(50) NOT NULL DEFAULT 'pending',
+  `price` decimal(10,2) NOT NULL,
+  `status` enum('Pending','Confirmed','Completed','Cancelled') DEFAULT 'Pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -63,9 +63,7 @@ INSERT INTO `notifications` (`notification_id`, `user_id`, `message`, `link`, `i
 (28, 3, 'New provider \'LNM CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=28', 1, '2025-10-06 08:00:57', 2),
 (29, 9, 'Congratulations! Your service \'LNM CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-06 08:01:19', 1),
 (30, 3, 'New provider \'LNM CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=30', 1, '2025-10-08 08:52:02', 2),
-(31, 9, 'Congratulations! Your service \'LNM CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-08 08:54:23', 1),
-(32, 3, 'New provider \'CARAGA CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=32', 1, '2025-10-24 04:43:11', 2),
-(33, 9, 'Congratulations! Your service \'CARAGA CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-24 04:44:07', 1);
+(31, 9, 'Congratulations! Your service \'LNM CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 0, '2025-10-08 08:54:23', 1);
 
 -- --------------------------------------------------------
 
@@ -126,8 +124,7 @@ CREATE TABLE `service_providers` (
 
 INSERT INTO `service_providers` (`id`, `user_id`, `company_name`, `company_address`, `company_email`, `contact_number`, `service_name`, `description`, `registration_date`, `service_id`, `service_description`, `price`, `available_date`, `available_time`, `is_approved`, `available_date_from`, `available_date_to`, `available_time_from`, `available_time_to`, `is_available`) VALUES
 (36, 9, 'LNM CARPENTRY', 'PUROK 1, La Union, Cabadbaran City, Agusan del Norte', 'venzonanthonie@gmail.com', '+639518793041', 'Carpentry', NULL, '2025-10-06 08:00:57', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 1),
-(37, 9, 'LNM CARPENTRY', 'PUROK 1\r\nNATIONAL HIGHWAY', 'venzonanthoniea@gmail.com', '+639329342620', 'Carpentry', NULL, '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-08', '16:51:00', '16:51:00', 1),
-(38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', NULL, '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-01', '2025-10-31', '12:01:00', '13:12:00', 1);
+(37, 9, 'LNM CARPENTRY', 'PUROK 1\r\nNATIONAL HIGHWAY', 'venzonanthoniea@gmail.com', '+639329342620', 'Carpentry', NULL, '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-08', '16:51:00', '16:51:00', 1);
 
 -- --------------------------------------------------------
 
@@ -169,8 +166,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birthday`, `phone_number`, `email`, `region`, `province`, `municipality`, `barangay`, `purok`, `role`, `password`, `verification_code`, `confirmation_token`, `token_expires_at`, `reset_token`, `reset_token_expiry`, `verification_token`, `is_verified`, `created_at`, `user_rules`, `profile_image`) VALUES
-(3, 'ANTHONIE FENY', 'V.', 'CATALAN', '', 'Male', '2025-09-15', '09329342620', 'venzonanthonie@gmail.com', 'Caraga', 'REGIONAL OFFICE', 'Tubay', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$l5TulsvLhQn7qtv.7hKAxepVOZERT8dw0Hu3KH7fuHwP0LwmjHSCe', NULL, NULL, NULL, NULL, NULL, '', 1, '2025-09-15 03:34:08', 2, 'user_3_68fafb418b8ad.jpg'),
-(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$gwJxF0S/FJjSynR1Qtm37uxkcN6c1NInPVp7HDaN0WyLl5xxaondW', NULL, NULL, NULL, '67ff2757c41ac137f103d97b7c5524d245505ce5982213898e17ad43e8c2bc76', '2025-10-24 12:41:07', NULL, 1, '2025-10-04 07:07:39', 1, '');
+(3, 'ANTHONIE FENY', 'V.', 'CATALAN', '', 'Male', '2025-09-15', '09329342620', 'venzonanthonie@gmail.com', 'Caraga', 'REGIONAL OFFICE', 'Tubay', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$l5TulsvLhQn7qtv.7hKAxepVOZERT8dw0Hu3KH7fuHwP0LwmjHSCe', NULL, NULL, NULL, NULL, NULL, '', 1, '2025-09-15 03:34:08', 2, 'user_3_68ce9ae82f3fc.png'),
+(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$5M1hil.SMklOerAZ0NV5C.iNfjsqiEFv1wkUZ0dj6Yc3dg9i7na1i', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-10-04 07:07:39', 1, '');
 
 --
 -- Indexes for dumped tables
@@ -180,8 +177,8 @@ INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `suffix`, `
 -- Indexes for table `bookings`
 --
 ALTER TABLE `bookings`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `provider_id` (`provider_id`);
+  ADD PRIMARY KEY (`booking_id`),
+  ADD KEY `service_id` (`service_id`);
 
 --
 -- Indexes for table `notifications`
@@ -216,13 +213,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `booking_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `services`
@@ -234,7 +231,7 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT for table `service_providers`
 --
 ALTER TABLE `service_providers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -250,7 +247,7 @@ ALTER TABLE `users`
 -- Constraints for table `bookings`
 --
 ALTER TABLE `bookings`
-  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`provider_id`) REFERENCES `service_providers` (`id`);
+  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
