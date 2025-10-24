@@ -34,6 +34,9 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Service - <?php echo htmlspecialchars($provider['service_name']); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    
     <style>
         :root {
             --primary: #4361ee;
@@ -42,7 +45,7 @@ $conn->close();
             --light: #f8f9fa;
             --dark: #212529;
             --success: #28a745;
-            --danger: #dc3545; /* Added for error messages */
+            --danger: #dc3545;
             --gray: #6c757d;
             --light-gray: #e9ecef;
             --border-radius: 12px;
@@ -82,20 +85,12 @@ $conn->close();
         .form-control { width: 100%; padding: 12px 16px; border: 2px solid var(--light-gray); border-radius: var(--border-radius); font-size: 1rem; transition: var(--transition); }
         .form-control:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2); }
         
+        /* Added style for textarea */
+        textarea.form-control { line-height: 1.6; resize: vertical; }
+
         .btn { padding: 12px 24px; border: none; border-radius: var(--border-radius); font-size: 1rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
         .btn-primary { background: var(--primary); color: white; width: 100%; justify-content: center; }
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
-
-        /* Alert Messages */
-        .alert {
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border-radius: var(--border-radius);
-            border: 1px solid transparent;
-            font-weight: 600;
-        }
-        .alert-success { background-color: rgba(40, 167, 69, 0.1); color: var(--success); border-color: var(--success); }
-        .alert-danger { background-color: rgba(220, 53, 69, 0.1); color: var(--danger); border-color: var(--danger); }
         
         footer { text-align: center; padding: 1.5rem; background: var(--light); color: var(--gray); border-top: 1px solid var(--light-gray); }
     </style>
@@ -108,16 +103,6 @@ $conn->close();
 
     <section class="booking-section">
         <a href="serviceProvider.php" class="back-link"><i class="fas fa-arrow-left"></i> Back to Directory</a>
-
-        <?php
-        // Display success/error messages
-        if (isset($_SESSION['message'])) {
-            $msg_type = $_SESSION['msg_type'] ?? 'danger';
-            echo '<div class="alert alert-' . htmlspecialchars($msg_type) . '">' . htmlspecialchars($_SESSION['message']) . '</div>';
-            unset($_SESSION['message']);
-            unset($_SESSION['msg_type']);
-        }
-        ?>
 
         <div class="booking-details">
             <h2>Service Details</h2>
@@ -147,12 +132,25 @@ $conn->close();
                     <label for="customer_phone"><i class="fas fa-phone"></i> Your Phone</label>
                     <input type="tel" id="customer_phone" name="customer_phone" class="form-control" required>
                 </div>
+
                 <div class="form-group">
-                    <label for="booking_date"><i class="fas fa-calendar-day"></i> Requested Date</label>
-                    <input type="date" id="booking_date" name="booking_date" class="form-control" 
-                           min="<?php echo htmlspecialchars($provider['available_date_from']); ?>" 
-                           max="<?php echo htmlspecialchars($provider['available_date_to']); ?>" required>
+                    <label><i class="fas fa-calendar-day"></i> Requested Date Range</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <label for="booking_date_from" style="font-weight: normal;">From</label>
+                            <input type="date" id="booking_date_from" name="booking_date_from" class="form-control"
+                                   min="<?php echo htmlspecialchars($provider['available_date_from']); ?>" 
+                                   max="<?php echo htmlspecialchars($provider['available_date_to']); ?>" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="booking_date_to" style="font-weight: normal;">To</label>
+                            <input type="date" id="booking_date_to" name="booking_date_to" class="form-control"
+                                   min="<?php echo htmlspecialchars($provider['available_date_from']); ?>" 
+                                   max="<?php echo htmlspecialchars($provider['available_date_to']); ?>" required>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="form-group">
                     <label for="booking_time"><i class="fas fa-clock"></i> Requested Time</label>
                     <input type="time" id="booking_time" name="booking_time" class="form-control"
@@ -160,6 +158,10 @@ $conn->close();
                            max="<?php echo htmlspecialchars($provider['available_time_to']); ?>" required>
                 </div>
                 
+                <div class="form-group">
+                    <label for="special_request"><i class="fas fa-comment-alt"></i> Special Request (Optional)</label>
+                    <textarea id="special_request" name="special_request" class="form-control" rows="4" placeholder="e.g., allergies, specific instructions, etc."></textarea>
+                </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle"></i> Submit Booking Request</button>
             </form>
         </div>
@@ -169,5 +171,62 @@ $conn->close();
         <p>&copy; <?php echo date("Y"); ?> Service Provider Directory. All rights reserved.</p>
     </footer>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const from = document.getElementById("booking_date_from");
+    const to = document.getElementById("booking_date_to");
+
+    from.addEventListener("change", function() {
+        to.min = from.value;
+        if (to.value < from.value) {
+            to.value = "";
+        }
+    });
+
+    to.addEventListener("change", function() {
+        if (to.value < from.value) {
+            alert("The 'To' date cannot be earlier than the 'From' date.");
+            to.value = "";
+        }
+    });
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+<?php
+// Check for session messages to display as toasts
+if (isset($_SESSION['message'])) {
+    // Use json_encode to safely pass the message to JavaScript
+    $message = json_encode($_SESSION['message']);
+    $msg_type = $_SESSION['msg_type'] ?? 'danger';
+    
+    // Get the hex colors from your CSS variables
+    $background_color = ($msg_type == 'success') ? '#28a745' : '#dc3545';
+    $border_radius = '12px'; // From your --border-radius var
+
+    // Echo the JavaScript to show the toast
+    echo "<script>
+        Toastify({
+            text: $message,
+            duration: 5000, // 5 seconds
+            close: true,
+            gravity: 'top', // `top` or `bottom`
+            position: 'right', // `left`, `center` or `right`
+            stopOnFocus: true, // Prevents dismissing of toast on hover
+            style: {
+                background: '$background_color',
+                borderRadius: '$border_radius',
+            }
+        }).showToast();
+    </script>";
+    
+    // Clear the message after displaying it
+    unset($_SESSION['message']);
+    unset($_SESSION['msg_type']);
+}
+?>
+
 </body>
 </html>

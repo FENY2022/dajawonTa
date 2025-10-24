@@ -1,10 +1,22 @@
 <?php
 session_start();
 
-if (isset($_GET['provider_id']) && !empty($_GET['provider_id'])) {
-    $provider_id = $_GET['provider_id'];
-} else {
-    $provider_id = null; // or set a default value if needed
+// Capture provider_id and booking_id (from query string) and sanitize/validate as integers
+$provider_id = null;
+$booking_id  = null;
+
+if (isset($_GET['provider_id']) && $_GET['provider_id'] !== '') {
+    $provider_id = filter_var($_GET['provider_id'], FILTER_VALIDATE_INT);
+    if ($provider_id === false) {
+        $provider_id = null;
+    }
+}
+
+if (isset($_GET['booking_id']) && $_GET['booking_id'] !== '') {
+    $booking_id = filter_var($_GET['booking_id'], FILTER_VALIDATE_INT);
+    if ($booking_id === false) {
+        $booking_id = null;
+    }
 }
 
 
@@ -45,8 +57,15 @@ $allowed_pages = [
     'my_ratings' => 'content/my_ratings.php',
     'view_booking_history' => 'content/view_booking_history.php',
     'booking_details' => 'content/booking_details.php',
+    
+
     'reschedule_option' => 'content/reschedule_option.php',
     'payment_status' => 'content/payment_status.php',
+    'provider_booking_details' => 'content/provider_booking_details.php?provider_id=' . urlencode($provider_id) . '&booking_id=' . urlencode($booking_id),
+
+
+
+
     // Admin pages (Role '2')
     'user_management' => 'content/user_management.php',
     'service_management' => 'content/service_management.php',
