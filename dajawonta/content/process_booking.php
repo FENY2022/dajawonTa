@@ -5,7 +5,17 @@ require '../db.php';
 // Only process POST requests
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+    // --- Ensure customer is logged in ---
+    if (!isset($_SESSION['user_id'])) {
+        $_SESSION['message'] = "You must be logged in to book a service.";
+        $_SESSION['msg_type'] = "danger";
+        header("Location: ../login.php");
+        exit;
+    }
+
     // 1. Get and sanitize form data
+    $customer_id = $_SESSION['user_id']; // NEW: Logged-in customer
+    $role = isset($_SESSION['user_rules']) ? $_SESSION['user_rules'] : 'customer'; // ✅ NEW ROW: Role from session
     $provider_id = $_POST['provider_id'];
     $customer_name = trim($_POST['customer_name']);
     $customer_email = trim($_POST['customer_email']);
@@ -13,20 +23,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $booking_date_from = $_POST['booking_date_from'];
     $booking_date_to = $_POST['booking_date_to'];
     
-    // --- UPDATED: Get time range instead of single time ---
+    // Time range
     $booking_time_from = $_POST['booking_time_from'];
     $booking_time_to = $_POST['booking_time_to'];
-    // --- END UPDATE ---
     
     $special_request = trim($_POST['special_request']);
 
-    // 2. Server-side Validation
+    // 2. Validation
     if (
         empty($provider_id) || empty($customer_name) || empty($customer_email) ||
         empty($customer_phone) || empty($booking_date_from) || empty($booking_date_to) ||
-        // --- UPDATED: Check new time fields ---
         empty($booking_time_from) || empty($booking_time_to)
-        // --- END UPDATE ---
     ) {
         $_SESSION['message'] = "All required fields must be filled.";
         $_SESSION['msg_type'] = "danger";
@@ -41,7 +48,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // --- UPDATED: Check both date and time ranges ---
     if (strtotime($booking_date_from) > strtotime($booking_date_to)) {
         $_SESSION['message'] = "The 'From' date cannot be later than the 'To' date.";
         $_SESSION['msg_type'] = "danger";
@@ -55,7 +61,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         header("Location: book_service.php?provider_id=" . $provider_id);
         exit;
     }
-    // --- END UPDATE ---
 
     // 3. Re-check provider availability
     $stmt = $conn->prepare("SELECT * FROM service_providers WHERE id = ? AND is_approved = 1 AND is_available = 1");
@@ -73,22 +78,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $provider = $result->fetch_assoc();
     $stmt->close();
 
-    // --- CRITICAL FIX: Get the provider's price ---
     $total_price = $provider['price'];
-    // --- END FIX ---
 
-    // Convert times for validation
     $req_date_from_ts = strtotime($booking_date_from);
     $req_date_to_ts = strtotime($booking_date_to);
     $provider_date_from_ts = strtotime($provider['available_date_from']);
     $provider_date_to_ts = strtotime($provider['available_date_to']);
     
-    // --- UPDATED: Check time range against provider's hours ---
     $provider_time_from_ts = strtotime($provider['available_time_from']);
     $provider_time_to_ts = strtotime($provider['available_time_to']);
     $req_time_from_ts = strtotime($booking_time_from);
     $req_time_to_ts = strtotime($booking_time_to);
-    // --- END UPDATE ---
 
     if ($req_date_from_ts < $provider_date_from_ts || $req_date_to_ts > $provider_date_to_ts) {
         $_SESSION['message'] = "The selected date range is outside the provider's availability.";
@@ -97,91 +97,85 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // --- UPDATED: Check if the entire requested time block is valid ---
     if ($req_time_from_ts < $provider_time_from_ts || $req_time_to_ts > $provider_time_to_ts) {
         $_SESSION['message'] = "The selected time range is outside the provider's available hours.";
         $_SESSION['msg_type'] = "danger";
         header("Location: book_service.php?provider_id=" . $provider_id);
         exit;
     }
-    // --- END UPDATE ---
 
-    // 4. Insert booking
-    
-    // --- UPDATED: SQL query with new time fields and total_price ---
+    // 4. Insert booking (with customer_id and role)
     $sql = "INSERT INTO bookings (
-                provider_id, customer_name, customer_email, customer_phone, 
-                booking_date_from, booking_date_to, 
-                booking_time_from, booking_time_to, 
+                customer_id, provider_id, role, customer_name, customer_email, customer_phone, 
+                booking_date_from, booking_date_to, booking_time_from, booking_time_to, 
                 special_request, total_price, booking_status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
             
     $stmt = $conn->prepare($sql);
-    
-    // --- UPDATED: bind_param with new fields (issssssssd) ---
-    // i = provider_id
-    // s = customer_name
-    // s = customer_email
-    // s = customer_phone
-    // s = booking_date_from
-    // s = booking_date_to
-    // s = booking_time_from
-    // s = booking_time_to
-    // s = special_request
-    // d = total_price (d stands for double/decimal)
+
     $stmt->bind_param(
-        "issssssssd", 
-        $provider_id, 
-        $customer_name, 
-        $customer_email, 
-        $customer_phone, 
-        $booking_date_from, 
-        $booking_date_to, 
-        $booking_time_from, 
-        $booking_time_to, 
+        "iisssssssssd", 
+        $customer_id,
+        $provider_id,
+        $role, 
+        $customer_name,
+        $customer_email,
+        $customer_phone,
+        $booking_date_from,
+        $booking_date_to,
+        $booking_time_from,
+        $booking_time_to,
         $special_request,
-        $total_price 
+        $total_price
     );
-    // --- END UPDATE ---
 
     if ($stmt->execute()) {
         $new_booking_id = $conn->insert_id;
         $_SESSION['message'] = "Your booking request has been submitted successfully!";
         $_SESSION['msg_type'] = "success";
 
-        // --- START NOTIFICATION CODE ---
-
-        // Fetch the provider's linked user_id from the service_providers table
+        // --- START PROVIDER NOTIFICATION ---
         $provider_user_id = $provider['user_id']; 
-
-        // Prepare notification details
         $notification_user_id = $provider_user_id;
         $notification_message = "You have a new booking request from " . htmlspecialchars($customer_name) . ".";
         $notification_link = "dashboard.php?action=provider_booking_details&booking_id=" . $new_booking_id;
-        $notification_role = 1; // 1 = provider
+        $notification_role = 1; // provider
 
-        // Insert into notifications table
         $notify_sql = "INSERT INTO notifications (user_id, message, link, role) VALUES (?, ?, ?, ?)";
         $notify_stmt = $conn->prepare($notify_sql);
 
-        if (!$notify_stmt) {
-            $_SESSION['message'] .= " (Booking saved, but failed to prepare notification query: " . $conn->error . ")";
-            $_SESSION['msg_type'] = "warning";
-        } else {
+        if ($notify_stmt) {
             $notify_stmt->bind_param("issi", $notification_user_id, $notification_message, $notification_link, $notification_role);
-
             if ($notify_stmt->execute()) {
                 $_SESSION['message'] .= " A notification has been sent to the provider.";
             } else {
-                $_SESSION['message'] .= " (Notification failed: " . $notify_stmt->error . ")";
+                $_SESSION['message'] .= " (Provider notification failed: " . $notify_stmt->error . ")";
                 $_SESSION['msg_type'] = "warning";
             }
-
             $notify_stmt->close();
         }
+        // --- END PROVIDER NOTIFICATION ---
 
-        // --- END NOTIFICATION CODE ---
+        // --- START CUSTOMER CONFIRMATION NOTIFICATION ---
+        $customer_notification_message = "Your booking request for " . htmlspecialchars($provider['service_name']) . " has been received.";
+        $customer_notification_link = "dashboard.php?action=my_bookings&booking_id=" . $new_booking_id;
+        $customer_role = 2; // customer
+
+        $cust_notify_sql = "INSERT INTO notifications (user_id, message, link, role) VALUES (?, ?, ?, ?)";
+        $cust_stmt = $conn->prepare($cust_notify_sql);
+
+        if ($cust_stmt) {
+            $cust_stmt->bind_param("issi", $customer_id, $customer_notification_message, $customer_notification_link, $customer_role);
+            if ($cust_stmt->execute()) {
+                $_SESSION['message'] .= " You will be notified once the provider responds.";
+            } else {
+                $_SESSION['message'] .= " (Customer notification failed: " . $cust_stmt->error . ")";
+                $_SESSION['msg_type'] = "warning";
+            }
+            $cust_stmt->close();
+        }
+        // --- END CUSTOMER NOTIFICATION ---
 
     } else {
         $_SESSION['message'] = "There was an error submitting your booking. Please try again. Error: " . $stmt->error;
@@ -191,7 +185,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
     $conn->close();
 
-    // Redirect back to booking page
     header("Location: book_service.php?provider_id=" . $provider_id);
     exit;
 

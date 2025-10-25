@@ -57,6 +57,14 @@ $allowed_pages = [
     'my_ratings' => 'content/my_ratings.php',
     'view_booking_history' => 'content/view_booking_history.php',
     'booking_details' => 'content/booking_details.php',
+
+    'customer_booking_details' => 'content/customer_booking_details.php?booking_id=' . urlencode($booking_id),
+    'customer_booking_details' => 'content/payment_success.php?booking_id=' . urlencode($booking_id),
+    'customer_booking_details' => 'content/payment_cancel.php?booking_id=' . urlencode($booking_id),
+
+
+    
+
     
 
     'reschedule_option' => 'content/reschedule_option.php',

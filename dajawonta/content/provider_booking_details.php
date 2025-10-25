@@ -5,7 +5,9 @@ require '../db.php'; // Database connection file
 
 // === CONFIGURATION ===
 define('PAYMONGO_SECRET_KEY', 'sk_test_96buPr5S5wCEGUSjiEizVgMx'); // ✅ Use SECRET key, not publishable
-define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/dashboard.php?action=provider_booking_details'); // Adjust base path for local dev
+// NOTE: I've updated the SITE_BASE_URL to point to the base dashboard path,
+// but the success/cancel URLs will need to be correctly configured for your environment.
+define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta'); 
 
 // Enable detailed error display for debugging (only for UAT)
 ini_set('display_errors', 1);
@@ -56,7 +58,7 @@ function create_paymongo_checkout_session($booking)
                 'payment_method_types' => ['card', 'gcash', 'paymaya', 'grab_pay'],
                 'description' => 'Payment for Booking #' . $booking['id'],
                 'success_url' => SITE_BASE_URL . '/payment_success.php?booking_id=' . $booking['id'],
-                'cancel_url'  => SITE_BASE_URL . '/payment_cancel.php?booking_id=' . $booking['id'],
+                'cancel_url' 	=> SITE_BASE_URL . '/payment_cancel.php?booking_id=' . $booking['id'],
                 'reference_number' => 'BOOKING_' . $booking['id']
             ]
         ]
@@ -108,6 +110,47 @@ function create_paymongo_checkout_session($booking)
     return ['error' => "Unexpected response (HTTP $http_code): " . $response];
 }
 
+// ---------------------------------------------------------------------
+// === FUNCTION: CREATE NOTIFICATION (NEW) ===
+// ---------------------------------------------------------------------
+/**
+ * Inserts a new notification into the database for a user.
+ *
+ * @param mysqli $conn The database connection.
+ * @param int $user_id The ID of the user to notify (the customer's user_id).
+ * @param string $message The notification message text.
+ * @param string $link The optional clickable link (e.g., to the booking details page).
+ * @param int $role The role of the user (e.g., 3 for customer).
+ * @return bool True on success, false on failure.
+ */
+// --- MODIFICATION HERE: Default role changed from 1 to 3 ---
+function create_notification($conn, $user_id, $message, $link, $role = 3)
+{
+    // The $role parameter determines who sees the notification (e.g., customer, provider).
+    $stmt = $conn->prepare(
+        "INSERT INTO notifications (user_id, message, link, role) VALUES (?, ?, ?, ?)"
+    );
+    
+    if ($stmt === false) {
+        error_log("Notification prepare() failed: " . $conn->error);
+        return false;
+    }
+    
+    $stmt->bind_param("issi", $user_id, $message, $link, $role);
+    $success = $stmt->execute();
+    
+    if (!$success) {
+        error_log("Notification execute() failed: " . $stmt->error);
+    }
+    
+    $stmt->close();
+    return $success;
+}
+
+// ---------------------------------------------------------------------
+// === CORE LOGIC STARTS HERE ===
+// ---------------------------------------------------------------------
+
 // === VALIDATE BOOKING ID ===
 if (!isset($_GET['booking_id']) || empty($_GET['booking_id'])) {
     die("<div class='alert alert-danger'>Invalid booking ID.</div>");
@@ -115,6 +158,7 @@ if (!isset($_GET['booking_id']) || empty($_GET['booking_id'])) {
 $booking_id = intval($_GET['booking_id']);
 
 // === FETCH BOOKING DETAILS ===
+// ⚠️ Ensure your bookings table includes the 'customer_id' and 'role' columns
 $stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ?");
 $stmt->bind_param("i", $booking_id);
 $stmt->execute();
@@ -139,7 +183,9 @@ if ($presult->num_rows > 0) {
 }
 $pstmt->close();
 
-// === HANDLE STATUS UPDATE ===
+// ---------------------------------------------------------------------
+// === HANDLE STATUS UPDATE (REVISED) ===
+// ---------------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $new_status = $_POST['booking_status'] ?? '';
     $valid_status = ['approved', 'declined', 'completed'];
@@ -147,26 +193,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     if (!in_array($new_status, $valid_status)) {
         $_SESSION['toast_message'] = "Invalid booking status.";
         $_SESSION['toast_type'] = "danger";
-        header("Location: provider_booking_det.php?booking_id=$booking_id");
+        header("Location: provider_booking_details.php?booking_id=$booking_id");
         exit;
     }
 
     $is_success = false;
-    $notification_message = "";
+    $notification_message = ""; 
+    
+    $customer_id = $booking['customer_id'] ?? null; // Get the customer's user ID
 
     if ($new_status === 'approved') {
         $paymongo = create_paymongo_checkout_session($booking);
+        
         if (isset($paymongo['checkout_url'])) {
             $link = $paymongo['checkout_url'];
             $pid = $paymongo['checkout_id'];
             $is_approve = 1;
+            
             $update = $conn->prepare("UPDATE bookings SET booking_status=?, payment_link=?, payment_id=?, is_approve=? WHERE id=?");
             $update->bind_param("sssii", $new_status, $link, $pid, $is_approve, $booking_id);
             $is_success = $update->execute();
+            $update->close();
 
             $notification_message = $is_success ?
                 "Booking approved! Payment link generated." :
-                "Failed to update booking: " . $update->error;
+                "Failed to update booking: " . $conn->error;
+
+            // Create notification for customer
+            if ($is_success && $customer_id) {
+                $notif_message = "Your booking (#$booking_id) with $provider_name has been approved! Please proceed with payment.";
+                // Adjust this to the customer's detail page link
+       
+                $notif_link = "dashboard.php?action=customer_booking_details&booking_id=$booking_id";
+
+                // Use the role from the booking row, default to 3 (customer) if not set.
+                create_notification($conn, $customer_id, $notif_message, $notif_link, $booking['role'] ?? 3);
+            } elseif ($is_success) {
+                error_log("Could not create 'approved' notification: customer_id not found for booking ID $booking_id.");
+            }
 
         } else {
             $notification_message = "PayMongo failed: " . ($paymongo['error'] ?? 'Unknown error.');
@@ -174,13 +238,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
 
     } elseif ($new_status === 'declined' || $new_status === 'completed') {
         $is_approve = ($new_status === 'completed') ? 1 : 0;
+        
         $update = $conn->prepare("UPDATE bookings SET booking_status=?, is_approve=? WHERE id=?");
         $update->bind_param("sii", $new_status, $is_approve, $booking_id);
         $is_success = $update->execute();
+        $update->close();
 
         $notification_message = $is_success ?
             "Booking marked as $new_status." :
-            "Failed to update booking: " . $update->error;
+            "Failed to update booking: " . $conn->error;
+
+        // Create notification for 'declined' status
+        if ($is_success && $new_status === 'declined') {
+            if ($customer_id) {
+                $notif_message = "We're sorry, your booking (#$booking_id) with $provider_name has been declined.";
+                // Adjust this to the customer's detail page link
+                $notif_link = "customer_booking_details.php?booking_id=$booking_id";
+                
+                // Use the role from the booking row, default to 3 (customer) if not set.
+                create_notification($conn, $customer_id, $notif_message, $notif_link, $booking['role'] ?? 3);
+            } else {
+                error_log("Could not create 'declined' notification: customer_id not found for booking ID $booking_id.");
+            }
+        }
     }
 
     // === TOAST MESSAGE HANDLER ===
@@ -376,7 +456,6 @@ $conn->close();
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -397,13 +476,11 @@ $conn->close();
                         <a class="nav-link" href="profile.php"><i class="fas fa-user me-1"></i> Profile</a>
                     </li>
                 </ul>
-            </div>
+            }
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="container py-4">
-        <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h3 mb-1">Booking Details</h1>
@@ -420,7 +497,6 @@ $conn->close();
             </div>
         </div>
 
-        <!-- Toast Notification -->
         <?php if (isset($_SESSION['toast_message'])): ?>
         <div class="toast-container">
             <div class="toast align-items-center text-white bg-<?php echo $_SESSION['toast_type']; ?> border-0 show" role="alert">
@@ -439,9 +515,7 @@ $conn->close();
         <?php endif; ?>
 
         <div class="row">
-            <!-- Left Column - Booking Information -->
             <div class="col-lg-8">
-                <!-- Customer & Service Details -->
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-user-circle me-2"></i>Customer & Service Information</span>
@@ -491,7 +565,6 @@ $conn->close();
                     </div>
                 </div>
 
-                <!-- Payment Information -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <i class="fas fa-credit-card me-2"></i>Payment Information
@@ -537,9 +610,7 @@ $conn->close();
                 </div>
             </div>
 
-            <!-- Right Column - Actions & Status -->
             <div class="col-lg-4">
-                <!-- Status Update Card -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <i class="fas fa-tasks me-2"></i>Booking Actions
@@ -563,7 +634,6 @@ $conn->close();
                     </div>
                 </div>
 
-                <!-- Timeline Card -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <i class="fas fa-history me-2"></i>Booking Timeline
@@ -596,7 +666,6 @@ $conn->close();
                     </div>
                 </div>
 
-                <!-- Debug Information (Collapsible) -->
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-code me-2"></i>Debug Information</span>
@@ -659,8 +728,9 @@ $conn->close();
             const toastEl = document.querySelector('.toast');
             if (toastEl) {
                 setTimeout(() => {
-                    const toast = bootstrap.Toast.getInstance(toastEl);
-                    if (toast) toast.hide();
+                    // Initialize Bootstrap Toast and hide it
+                    const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+                    toast.hide();
                 }, 5000);
             }
         });
