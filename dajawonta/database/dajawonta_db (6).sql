@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 25, 2025 at 02:27 PM
+-- Generation Time: Oct 25, 2025 at 08:18 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,6 +30,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `bookings` (
   `id` int(11) NOT NULL,
   `provider_id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
   `customer_name` varchar(255) NOT NULL,
   `customer_email` varchar(255) NOT NULL,
   `customer_phone` varchar(50) NOT NULL,
@@ -42,6 +43,7 @@ CREATE TABLE `bookings` (
   `payment_link` text DEFAULT NULL,
   `booking_time` time NOT NULL,
   `booking_status` varchar(50) NOT NULL DEFAULT 'pending',
+  `is_approve` tinyint(1) NOT NULL DEFAULT 0,
   `special_request` text DEFAULT NULL,
   `price` decimal(10,2) NOT NULL,
   `payment_status` varchar(20) NOT NULL DEFAULT 'unpaid',
@@ -54,14 +56,9 @@ CREATE TABLE `bookings` (
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `provider_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date_from`, `booking_date_to`, `booking_time_from`, `booking_time_to`, `total_price`, `payment_id`, `payment_link`, `booking_time`, `booking_status`, `special_request`, `price`, `payment_status`, `paymongo_checkout_id`, `paymongo_payment_intent_id`, `created_at`) VALUES
-(1, 36, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-10', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:00:00', 'pending', NULL, 0.00, 'unpaid', NULL, NULL, '2025-10-24 06:22:44'),
-(2, 37, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-08', '2025-10-08', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:51:00', 'pending', NULL, 0.00, 'unpaid', NULL, NULL, '2025-10-24 06:35:26'),
-(3, 37, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-08', '2025-10-08', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:51:00', 'pending', NULL, 0.00, 'unpaid', NULL, NULL, '2025-10-24 06:38:20'),
-(4, 36, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-10', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:00:00', 'pending', NULL, 0.00, 'unpaid', NULL, NULL, '2025-10-24 06:45:03'),
-(5, 36, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-10', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:00:00', 'completed', NULL, 0.00, 'unpaid', NULL, NULL, '2025-10-24 07:01:23'),
-(6, 36, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-10', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:00:00', 'pending', 'Please bring cheed', 0.00, 'unpaid', NULL, NULL, '2025-10-24 08:22:10'),
-(7, 36, 'ANTHONIE FENY V. CATALAN', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '00:00:00', '00:00:00', 0.00, NULL, NULL, '16:00:00', 'pending', 'I want 1 panday', 0.00, 'unpaid', NULL, NULL, '2025-10-25 06:59:54');
+INSERT INTO `bookings` (`id`, `provider_id`, `customer_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date_from`, `booking_date_to`, `booking_time_from`, `booking_time_to`, `total_price`, `payment_id`, `payment_link`, `booking_time`, `booking_status`, `is_approve`, `special_request`, `price`, `payment_status`, `paymongo_checkout_id`, `paymongo_payment_intent_id`, `created_at`) VALUES
+(14, 36, 0, 'MARIA DECASTRO', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_FFkxc77bmTU4F37Q1W9rqgez', 'https://checkout.paymongo.com/cs_FFkxc77bmTU4F37Q1W9rqgez_client_3WGqNMBjXhnkr6t36fTbHi4s#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, 'rgrdg', 0.00, 'unpaid', NULL, NULL, '2025-10-25 15:21:58'),
+(15, 36, 0, 'MARIA DECASTRO', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_Q9jg9df5hPYVwR8C3V3J1Fhx', 'https://checkout.paymongo.com/cs_Q9jg9df5hPYVwR8C3V3J1Fhx_client_8dmZ6yiux1ZVCNtf86iVL7SU#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'unpaid', NULL, NULL, '2025-10-25 15:36:50');
 
 -- --------------------------------------------------------
 
@@ -84,20 +81,10 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`notification_id`, `user_id`, `message`, `link`, `is_read`, `created_at`, `role`) VALUES
-(28, 3, 'New provider \'LNM CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=28', 1, '2025-10-06 08:00:57', 2),
-(29, 9, 'Congratulations! Your service \'LNM CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-06 08:01:19', 1),
-(30, 3, 'New provider \'LNM CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=30', 1, '2025-10-08 08:52:02', 2),
-(31, 9, 'Congratulations! Your service \'LNM CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-08 08:54:23', 1),
-(32, 3, 'New provider \'CARAGA CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=32', 1, '2025-10-24 04:43:11', 2),
-(33, 9, 'Congratulations! Your service \'CARAGA CARPENTRY\' has been approved.', 'dashboard.php?action=view_listings&provider_id=9', 1, '2025-10-24 04:44:07', 1),
-(34, 37, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'provider_booking_details.php?booking_id=2', 0, '2025-10-24 06:35:26', 1),
-(35, 37, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'provider_booking_details.php?booking_id=3', 0, '2025-10-24 06:38:20', 1),
-(36, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'provider_booking_details.php?booking_id=4', 0, '2025-10-24 06:45:03', 1),
-(37, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=5', 0, '2025-10-24 07:01:23', 1),
-(38, 0, 'Your booking request has been APPROVED by LNM CARPENTRY.', 'dashboard.php?action=view_booking&booking_id=5', 0, '2025-10-24 08:05:12', 0),
-(39, 0, 'Your booking request has been COMPLETED by LNM CARPENTRY.', 'dashboard.php?action=view_booking&booking_id=5', 0, '2025-10-24 08:05:28', 0),
-(40, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=6', 0, '2025-10-24 08:22:10', 1),
-(41, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=7', 0, '2025-10-25 06:59:54', 1);
+(46, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=12', 0, '2025-10-25 14:23:19', 1),
+(47, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=13', 0, '2025-10-25 14:33:42', 1),
+(48, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=14', 0, '2025-10-25 15:21:58', 1),
+(49, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=15', 0, '2025-10-25 15:36:50', 1);
 
 -- --------------------------------------------------------
 
@@ -248,13 +235,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- AUTO_INCREMENT for table `services`
