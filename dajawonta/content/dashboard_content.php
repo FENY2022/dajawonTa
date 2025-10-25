@@ -64,8 +64,8 @@ function getQuickActions($role) {
             ];
         case '2': // Admin
             return [
-                ['icon' => 'fa-users-cog', 'label' => 'Manage Users', 'link' => 'dashboard.php?action=user_management'],
-                ['icon' => 'fa-list-alt', 'label' => 'Manage Services', 'link' => 'dashboard.php?action=service_management'],
+                ['icon' => 'fa-users-cog', 'label' => 'Manage Users', 'link' => 'user_management.php'],
+                ['icon' => 'fa-list-alt', 'label' => 'Manage Services', 'link' => 'service_management.php'],
                 ['icon' => 'fa-chart-line', 'label' => 'View Analytics', 'link' => 'dashboard.php?action=analytics']
             ];
         default: return [];

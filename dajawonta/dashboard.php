@@ -73,6 +73,7 @@ $allowed_pages = [
     'analytics' => 'content/analytics.php',
     'confirmService_providers' => 'content/confirmService_providers.php',
 
+
     // Common pages
     'profile' => 'content/profile.php',
     'settings' => 'content/profile.php',
