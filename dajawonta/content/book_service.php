@@ -152,12 +152,22 @@ $conn->close();
                 </div>
 
                 <div class="form-group">
-                    <label for="booking_time"><i class="fas fa-clock"></i> Requested Time</label>
-                    <input type="time" id="booking_time" name="booking_time" class="form-control"
-                           min="<?php echo htmlspecialchars($provider['available_time_from']); ?>"
-                           max="<?php echo htmlspecialchars($provider['available_time_to']); ?>" required>
+                    <label><i class="fas fa-clock"></i> Requested Time Range</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1;">
+                            <label for="booking_time_from" style="font-weight: normal;">From</label>
+                            <input type="time" id="booking_time_from" name="booking_time_from" class="form-control"
+                                   min="<?php echo htmlspecialchars($provider['available_time_from']); ?>"
+                                   max="<?php echo htmlspecialchars($provider['available_time_to']); ?>" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="booking_time_to" style="font-weight: normal;">To</label>
+                            <input type="time" id="booking_time_to" name="booking_time_to" class="form-control"
+                                   min="<?php echo htmlspecialchars($provider['available_time_from']); ?>"
+                                   max="<?php echo htmlspecialchars($provider['available_time_to']); ?>" required>
+                        </div>
+                    </div>
                 </div>
-                
                 <div class="form-group">
                     <label for="special_request"><i class="fas fa-comment-alt"></i> Special Request (Optional)</label>
                     <textarea id="special_request" name="special_request" class="form-control" rows="4" placeholder="e.g., allergies, specific instructions, etc."></textarea>
@@ -174,25 +184,46 @@ $conn->close();
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const from = document.getElementById("booking_date_from");
-    const to = document.getElementById("booking_date_to");
+    const fromDate = document.getElementById("booking_date_from");
+    const toDate = document.getElementById("booking_date_to");
 
-    from.addEventListener("change", function() {
-        to.min = from.value;
-        if (to.value < from.value) {
-            to.value = "";
+    // NEW: Selectors for time fields
+    const fromTime = document.getElementById("booking_time_from");
+    const toTime = document.getElementById("booking_time_to");
+
+    // Date validation
+    fromDate.addEventListener("change", function() {
+        toDate.min = fromDate.value;
+        if (toDate.value < fromDate.value) {
+            toDate.value = "";
         }
     });
 
-    to.addEventListener("change", function() {
-        if (to.value < from.value) {
+    toDate.addEventListener("change", function() {
+        if (toDate.value < fromDate.value) {
             alert("The 'To' date cannot be earlier than the 'From' date.");
-            to.value = "";
+            toDate.value = "";
+        }
+    });
+
+    // NEW: Time validation
+    fromTime.addEventListener("change", function() {
+        // Set the minimum 'To' time based on the 'From' time
+        toTime.min = fromTime.value;
+        
+        if (toTime.value && toTime.value < fromTime.value) {
+            toTime.value = ""; // Clear if invalid
+        }
+    });
+
+    toTime.addEventListener("change", function() {
+        if (fromTime.value && toTime.value < fromTime.value) {
+            alert("The 'To' time cannot be earlier than the 'From' time.");
+            toTime.value = "";
         }
     });
 });
 </script>
-
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 <?php
