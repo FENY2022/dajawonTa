@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 25, 2025 at 08:18 PM
+-- Generation Time: Oct 25, 2025 at 09:41 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -31,6 +31,7 @@ CREATE TABLE `bookings` (
   `id` int(11) NOT NULL,
   `provider_id` int(11) NOT NULL,
   `customer_id` int(11) NOT NULL,
+  `role` int(11) NOT NULL,
   `customer_name` varchar(255) NOT NULL,
   `customer_email` varchar(255) NOT NULL,
   `customer_phone` varchar(50) NOT NULL,
@@ -56,9 +57,8 @@ CREATE TABLE `bookings` (
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `provider_id`, `customer_id`, `customer_name`, `customer_email`, `customer_phone`, `booking_date_from`, `booking_date_to`, `booking_time_from`, `booking_time_to`, `total_price`, `payment_id`, `payment_link`, `booking_time`, `booking_status`, `is_approve`, `special_request`, `price`, `payment_status`, `paymongo_checkout_id`, `paymongo_payment_intent_id`, `created_at`) VALUES
-(14, 36, 0, 'MARIA DECASTRO', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_FFkxc77bmTU4F37Q1W9rqgez', 'https://checkout.paymongo.com/cs_FFkxc77bmTU4F37Q1W9rqgez_client_3WGqNMBjXhnkr6t36fTbHi4s#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, 'rgrdg', 0.00, 'unpaid', NULL, NULL, '2025-10-25 15:21:58'),
-(15, 36, 0, 'MARIA DECASTRO', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_Q9jg9df5hPYVwR8C3V3J1Fhx', 'https://checkout.paymongo.com/cs_Q9jg9df5hPYVwR8C3V3J1Fhx_client_8dmZ6yiux1ZVCNtf86iVL7SU#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'unpaid', NULL, NULL, '2025-10-25 15:36:50');
+INSERT INTO `bookings` (`id`, `provider_id`, `customer_id`, `role`, `customer_name`, `customer_email`, `customer_phone`, `booking_date_from`, `booking_date_to`, `booking_time_from`, `booking_time_to`, `total_price`, `payment_id`, `payment_link`, `booking_time`, `booking_status`, `is_approve`, `special_request`, `price`, `payment_status`, `paymongo_checkout_id`, `paymongo_payment_intent_id`, `created_at`) VALUES
+(20, 36, 3, 2, 'ANTHONIE FENY V. CATALAN', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_kehJChcM6mA6FpWryKw7fdAZ', 'https://checkout.paymongo.com/cs_kehJChcM6mA6FpWryKw7fdAZ_client_3mKLew56AWa7JzvtoMkhxEXT#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'paid', NULL, 'pi_qqpqAQcmep4Pydgsmejk5tuP', '2025-10-25 19:25:35');
 
 -- --------------------------------------------------------
 
@@ -84,7 +84,22 @@ INSERT INTO `notifications` (`notification_id`, `user_id`, `message`, `link`, `i
 (46, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=12', 0, '2025-10-25 14:23:19', 1),
 (47, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=13', 0, '2025-10-25 14:33:42', 1),
 (48, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=14', 0, '2025-10-25 15:21:58', 1),
-(49, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=15', 0, '2025-10-25 15:36:50', 1);
+(49, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=15', 0, '2025-10-25 15:36:50', 1),
+(50, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=16', 0, '2025-10-25 18:22:56', 1),
+(52, 3, 'Your booking (#16) with LNM CARPENTRY has been approved! Please proceed with payment.', 'customer_booking_details.php?booking_id=16', 0, '2025-10-25 18:29:28', 3),
+(53, 3, 'Your booking (#16) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=16', 0, '2025-10-25 18:32:13', 1),
+(54, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=17', 0, '2025-10-25 18:41:46', 1),
+(55, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=17', 0, '2025-10-25 18:41:46', 2),
+(56, 3, 'Your booking (#17) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=17', 0, '2025-10-25 18:55:38', 2),
+(57, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=18', 0, '2025-10-25 19:19:20', 1),
+(58, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=18', 0, '2025-10-25 19:19:20', 2),
+(59, 3, 'Your booking (#18) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=18', 0, '2025-10-25 19:19:31', 2),
+(60, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=19', 0, '2025-10-25 19:23:29', 1),
+(61, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=19', 0, '2025-10-25 19:23:29', 2),
+(62, 3, 'Your booking (#19) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=19', 0, '2025-10-25 19:23:39', 2),
+(63, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=20', 0, '2025-10-25 19:25:35', 1),
+(64, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=20', 0, '2025-10-25 19:25:35', 2),
+(65, 3, 'Your booking (#20) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=20', 0, '2025-10-25 19:25:50', 2);
 
 -- --------------------------------------------------------
 
@@ -235,13 +250,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT for table `services`
