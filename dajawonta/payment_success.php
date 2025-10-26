@@ -1,7 +1,7 @@
 <?php
 ob_start();
 session_start();
-require '../db.php'; // Database connection file
+require 'db.php'; // Database connection file
 
 // === CONFIGURATION ===
 define('PAYMONGO_SECRET_KEY', 'sk_test_96buPr5S5wCEGUSjiEizVgMx'); // ✅ Use SECRET key
@@ -57,20 +57,20 @@ function verify_paymongo_payment($checkout_id)
     if ($payment_status === 'succeeded') {
         // Payment is confirmed!
         return [
-            'status' => 'paid', 
+            'status' => 'paid',
             'payment_intent_id' => $payment_intent_id
         ];
     } elseif ($payment_status === 'awaiting_payment_method' || $payment_status === 'processing') {
         // Payment is still pending (e.g., waiting for bank transfer)
         return [
-            'status' => 'pending', 
+            'status' => 'pending',
             'payment_intent_id' => $payment_intent_id
         ];
     } else {
         // Payment failed or was canceled
         return [
-            'status' => 'failed', 
-            'payment_intent_id' => $payment_intent_id, 
+            'status' => 'failed',
+            'payment_intent_id' => $payment_intent_id,
             'error' => 'Payment was not successful (Status: ' . $payment_status . ')'
         ];
     }
@@ -105,18 +105,20 @@ $current_payment_status = $booking['payment_status'];
 // === 3. CHECK IF ALREADY MARKED AS PAID ===
 // This prevents running the verification multiple times
 if ($current_payment_status === 'paid') {
-    // Already verified. Just redirect.
     $_SESSION['toast_message'] = "Your payment is confirmed.";
     $_SESSION['toast_type'] = "success";
-    header("Location: customer_booking_details.php?booking_id=$booking_id");
+    echo "<script>
+        window.top.location.href = 'dashboard.php?action=customer_booking_details&booking_id=$booking_id';
+    </script>";
     exit;
 }
 
 if (empty($checkout_id)) {
-    // This shouldn't happen, but good to check
     $_SESSION['toast_message'] = "Error: Payment ID not found for this booking.";
     $_SESSION['toast_type'] = "danger";
-    header("Location: customer_booking_details.php?booking_id=$booking_id");
+    echo "<script>
+        window.top.location.href = 'dashboard.php?action=customer_booking_details&booking_id=$booking_id';
+    </script>";
     exit;
 }
 
@@ -126,7 +128,6 @@ $payment_intent_id = $verification['payment_intent_id'] ?? null;
 
 if ($verification['status'] === 'paid') {
     // --- SUCCESS ---
-    // Update the database to mark as 'paid'
     $update = $conn->prepare("UPDATE bookings SET payment_status = 'paid', paymongo_payment_intent_id = ? WHERE id = ?");
     $update->bind_param("si", $payment_intent_id, $booking_id);
     $update->execute();
@@ -137,10 +138,9 @@ if ($verification['status'] === 'paid') {
 
 } elseif ($verification['status'] === 'pending') {
     // --- PENDING ---
-    // This can happen with bank transfers, etc.
     $_SESSION['toast_message'] = "Your payment is still processing. We will update your booking status shortly.";
     $_SESSION['toast_type'] = "warning";
-    
+
 } else {
     // --- FAILED ---
     $_SESSION['toast_message'] = "Payment verification failed. Please try again or contact support.";
@@ -151,8 +151,10 @@ if ($verification['status'] === 'paid') {
 $conn->close();
 
 // === 5. REDIRECT BACK TO DETAILS PAGE ===
-// The customer will now see the "Payment received!" message
-header("Location: customer_booking_details.php?booking_id=$booking_id");
+// ✅ Works inside iframe – redirects parent window
+echo "<script>
+    window.top.location.href = 'dashboard.php?action=customer_booking_details&booking_id=$booking_id';
+</script>";
 exit;
 
 ob_end_flush();

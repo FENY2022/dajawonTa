@@ -59,8 +59,8 @@ $allowed_pages = [
     'booking_details' => 'content/booking_details.php',
 
     'customer_booking_details' => 'content/customer_booking_details.php?booking_id=' . urlencode($booking_id),
-    'payment_success' => 'content/payment_success.php?booking_id=' . urlencode($booking_id),
-    'payment_cancel' => 'content/payment_cancel.php?booking_id=' . urlencode($booking_id),
+    // 'payment_success' => 'content/payment_success.php?booking_id=' . urlencode($booking_id),
+    // 'payment_cancel' => 'content/payment_cancel.php?booking_id=' . urlencode($booking_id),
 
 
     

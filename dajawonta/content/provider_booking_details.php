@@ -7,7 +7,9 @@ require '../db.php'; // Database connection file
 define('PAYMONGO_SECRET_KEY', 'sk_test_96buPr5S5wCEGUSjiEizVgMx'); // ✅ Use SECRET key, not publishable
 // NOTE: I've updated the SITE_BASE_URL to point to the base dashboard path,
 // but the success/cancel URLs will need to be correctly configured for your environment.
-define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta'); 
+// define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
+define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
+
 
 // Enable detailed error display for debugging (only for UAT)
 ini_set('display_errors', 1);
@@ -193,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     if (!in_array($new_status, $valid_status)) {
         $_SESSION['toast_message'] = "Invalid booking status.";
         $_SESSION['toast_type'] = "danger";
-        header("Location: provider_booking_details.php?booking_id=$booking_id");
+        header("Location: customer_booking_details.php?booking_id=$booking_id");
         exit;
     }
 
@@ -267,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $_SESSION['toast_message'] = $notification_message;
     $_SESSION['toast_type'] = $is_success ? 'success' : 'danger';
 
-    header("Location: provider_booking_details.php?booking_id=$booking_id");
+    header("Location: customer_booking_details.php?booking_id=$booking_id");
     exit;
 }
 

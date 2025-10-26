@@ -16,6 +16,6 @@ $_SESSION['toast_message'] = "Payment cancelled. You can try again from the book
 $_SESSION['toast_type'] = "warning";
 
 // Redirect the user back to the booking details page for retrying payment
-header("Location: dashboard.php?action=view_booking&booking_id=" . $booking_id);
+header("Location: dashboard.php?action=customer_booking_details&booking_id=" . $booking_id);
 exit;
 ?>
