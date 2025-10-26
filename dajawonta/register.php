@@ -16,7 +16,7 @@ $redirectEmail = '';
 function sendVerificationEmail($email, $firstName, $verificationToken) {
     // --- CHANGE 1: Define your website's base URL ---
     // IMPORTANT: Change 'http://localhost/dajawonta' to your actual live domain URL.
-    $baseURL = 'http://localhost/dajawonta'; 
+    $baseURL = 'http://localhost/dajawonTa/dajawonta'; 
     $confirmationLink = $baseURL . '/confirm.php?token=' . urlencode($verificationToken);
 
     // --- CHANGE 2: Update the email subject and message ---
