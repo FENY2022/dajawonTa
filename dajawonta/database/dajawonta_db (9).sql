@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2025 at 04:53 AM
+-- Generation Time: Oct 26, 2025 at 10:59 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -189,7 +189,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birthday`, `phone_number`, `email`, `region`, `province`, `municipality`, `barangay`, `purok`, `role`, `password`, `verification_code`, `confirmation_token`, `token_expires_at`, `reset_token`, `reset_token_expiry`, `verification_token`, `is_verified`, `created_at`, `user_rules`, `profile_image`) VALUES
 (3, 'ANTHONIE FENY', 'V.', 'CATALAN', '', 'Male', '2025-09-15', '09329342620', 'venzonanthonie@gmail.com', 'Caraga', 'REGIONAL OFFICE', 'Tubay', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$1M.xgH8wxwd0vBZMrv0m6.sKS4BXVLngFu5fbVnLt5BmJnkrnlslq', NULL, NULL, NULL, NULL, NULL, '', 1, '2025-09-15 03:34:08', 2, 'user_3_68fafb418b8ad.jpg'),
-(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$qFY1f7RrJDbpSSpwFa8WmuaoBPQ1lLhLGS3vQPB/aG0SVjWh12A5.', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-10-04 07:07:39', 1, '');
+(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$qFY1f7RrJDbpSSpwFa8WmuaoBPQ1lLhLGS3vQPB/aG0SVjWh12A5.', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-10-04 07:07:39', 1, ''),
+(10, 'Christian Paul', '', 'Guillen', '', 'Male', '2006-10-26', '09556214412', 'christianpaulguillen6@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', '', 'provider', '$2y$10$kc.rAv4psAdTPzTYC4wFdO2y28fji0ZKQLhjCyTJFHrY.K/h1mKHG', '3c2f9dbff6f8343dc713ae331dfd7b4c77f24b8cd7c3f5f49c841d6adff6a709', NULL, NULL, NULL, NULL, NULL, 0, '2025-10-26 09:56:31', 2, '');
 
 --
 -- Indexes for dumped tables
@@ -259,7 +260,7 @@ ALTER TABLE `service_providers`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Constraints for dumped tables
