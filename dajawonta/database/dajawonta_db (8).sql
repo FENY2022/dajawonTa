@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 25, 2025 at 09:41 PM
+-- Generation Time: Oct 26, 2025 at 04:53 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -58,7 +58,7 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `provider_id`, `customer_id`, `role`, `customer_name`, `customer_email`, `customer_phone`, `booking_date_from`, `booking_date_to`, `booking_time_from`, `booking_time_to`, `total_price`, `payment_id`, `payment_link`, `booking_time`, `booking_status`, `is_approve`, `special_request`, `price`, `payment_status`, `paymongo_checkout_id`, `paymongo_payment_intent_id`, `created_at`) VALUES
-(20, 36, 3, 2, 'ANTHONIE FENY V. CATALAN', 'venzonanthonie@gmail.com', '09329342620', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, 'cs_kehJChcM6mA6FpWryKw7fdAZ', 'https://checkout.paymongo.com/cs_kehJChcM6mA6FpWryKw7fdAZ_client_3mKLew56AWa7JzvtoMkhxEXT#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'paid', NULL, 'pi_qqpqAQcmep4Pydgsmejk5tuP', '2025-10-25 19:25:35');
+(33, 39, 9, 1, 'ANTHONIE FENY V. CATALAN', 'venzonanthonie@gmail.com', '09329342620', '2025-10-26', '2025-10-31', '07:00:00', '17:00:00', 1800.00, 'cs_EVNtGkTp1x4PdUTk8cw6oUiv', 'https://checkout.paymongo.com/cs_EVNtGkTp1x4PdUTk8cw6oUiv_client_BLKvAc7aSBe4BcV7bimCMmFb#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'paid', NULL, 'pi_5F4urWfHeuRoCiS5MwiQ8x4C', '2025-10-26 03:48:04');
 
 -- --------------------------------------------------------
 
@@ -81,25 +81,9 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`notification_id`, `user_id`, `message`, `link`, `is_read`, `created_at`, `role`) VALUES
-(46, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=12', 0, '2025-10-25 14:23:19', 1),
-(47, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=13', 0, '2025-10-25 14:33:42', 1),
-(48, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=14', 0, '2025-10-25 15:21:58', 1),
-(49, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=15', 0, '2025-10-25 15:36:50', 1),
-(50, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=16', 0, '2025-10-25 18:22:56', 1),
-(52, 3, 'Your booking (#16) with LNM CARPENTRY has been approved! Please proceed with payment.', 'customer_booking_details.php?booking_id=16', 0, '2025-10-25 18:29:28', 3),
-(53, 3, 'Your booking (#16) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=16', 0, '2025-10-25 18:32:13', 1),
-(54, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=17', 0, '2025-10-25 18:41:46', 1),
-(55, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=17', 0, '2025-10-25 18:41:46', 2),
-(56, 3, 'Your booking (#17) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=17', 0, '2025-10-25 18:55:38', 2),
-(57, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=18', 0, '2025-10-25 19:19:20', 1),
-(58, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=18', 0, '2025-10-25 19:19:20', 2),
-(59, 3, 'Your booking (#18) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=18', 0, '2025-10-25 19:19:31', 2),
-(60, 9, 'You have a new booking request from MARIA DECASTRO.', 'dashboard.php?action=provider_booking_details&booking_id=19', 0, '2025-10-25 19:23:29', 1),
-(61, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=19', 0, '2025-10-25 19:23:29', 2),
-(62, 3, 'Your booking (#19) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=19', 0, '2025-10-25 19:23:39', 2),
-(63, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=20', 0, '2025-10-25 19:25:35', 1),
-(64, 3, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=20', 0, '2025-10-25 19:25:35', 2),
-(65, 3, 'Your booking (#20) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=20', 0, '2025-10-25 19:25:50', 2);
+(120, 9, 'You have a new booking request from ANTHONIE FENY V. CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=33', 0, '2025-10-26 03:48:04', 1),
+(121, 9, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=33', 0, '2025-10-26 03:48:04', 2),
+(122, 9, 'Your booking (#33) with CANTILAN CARPENTERO has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=33', 0, '2025-10-26 03:52:01', 1);
 
 -- --------------------------------------------------------
 
@@ -161,7 +145,8 @@ CREATE TABLE `service_providers` (
 INSERT INTO `service_providers` (`id`, `user_id`, `company_name`, `company_address`, `company_email`, `contact_number`, `service_name`, `description`, `registration_date`, `service_id`, `service_description`, `price`, `available_date`, `available_time`, `is_approved`, `available_date_from`, `available_date_to`, `available_time_from`, `available_time_to`, `is_available`) VALUES
 (36, 9, 'LNM CARPENTRY', 'PUROK 1, La Union, Cabadbaran City, Agusan del Norte', 'venzonanthonie@gmail.com', '+639518793041', 'Carpentry', NULL, '2025-10-06 08:00:57', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 1),
 (37, 9, 'LNM CARPENTRY', 'PUROK 1NATIONAL HIGHWAY', 'venzonanthonie@gmail.com', '+639329342620', 'Carpentry', '', '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-08', '16:51:00', '16:51:00', 1),
-(38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', '', '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-31', '12:01:00', '13:12:00', 1);
+(38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', '', '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-31', '12:01:00', '13:12:00', 1),
+(39, 9, 'CANTILAN CARPENTERO', 'CANTILAN SURIGAO DEL SUR', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', '', '2025-10-26 01:29:18', 3, 'Furniture repair, door/window fixes', 1800.00, '2025-01-01', '00:00:00', 1, '0000-00-00', '2025-11-29', '07:00:00', '17:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -203,8 +188,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birthday`, `phone_number`, `email`, `region`, `province`, `municipality`, `barangay`, `purok`, `role`, `password`, `verification_code`, `confirmation_token`, `token_expires_at`, `reset_token`, `reset_token_expiry`, `verification_token`, `is_verified`, `created_at`, `user_rules`, `profile_image`) VALUES
-(3, 'ANTHONIE FENY', 'V.', 'CATALAN', '', 'Male', '2025-09-15', '09329342620', 'venzonanthonie@gmail.com', 'Caraga', 'REGIONAL OFFICE', 'Tubay', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$l5TulsvLhQn7qtv.7hKAxepVOZERT8dw0Hu3KH7fuHwP0LwmjHSCe', NULL, NULL, NULL, NULL, NULL, '', 1, '2025-09-15 03:34:08', 2, 'user_3_68fafb418b8ad.jpg'),
-(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$Big8ETZRwiRhQomVhA07Qeh3vjkE8sC4lIQ6O7zGqdizUboIRoMd.', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-10-04 07:07:39', 1, '');
+(3, 'ANTHONIE FENY', 'V.', 'CATALAN', '', 'Male', '2025-09-15', '09329342620', 'venzonanthonie@gmail.com', 'Caraga', 'REGIONAL OFFICE', 'Tubay', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$1M.xgH8wxwd0vBZMrv0m6.sKS4BXVLngFu5fbVnLt5BmJnkrnlslq', NULL, NULL, NULL, NULL, NULL, '', 1, '2025-09-15 03:34:08', 2, 'user_3_68fafb418b8ad.jpg'),
+(9, 'FELY GRACE', 'VENZON', 'CATALAN', '', 'Female', '2025-11-08', '09478984921', 'catalanfelygrace823@gmail.com', 'Caraga', 'Surigao del Sur', 'Cantilan', 'Magosilom', 'NATIONAL HIGHWAY', 'provider', '$2y$10$qFY1f7RrJDbpSSpwFa8WmuaoBPQ1lLhLGS3vQPB/aG0SVjWh12A5.', NULL, NULL, NULL, NULL, NULL, NULL, 1, '2025-10-04 07:07:39', 1, '');
 
 --
 -- Indexes for dumped tables
@@ -250,13 +235,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
 --
 -- AUTO_INCREMENT for table `services`
@@ -268,7 +253,7 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT for table `service_providers`
 --
 ALTER TABLE `service_providers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `users`
