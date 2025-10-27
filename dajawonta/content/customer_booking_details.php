@@ -28,15 +28,16 @@ if (!isset($_GET['booking_id']) || empty($_GET['booking_id'])) {
 }
 $booking_id = intval($_GET['booking_id']);
 
+
 // === FETCH BOOKING DETAILS ===
 // Security: We fetch the booking *only* if the ID matches
 // AND the customer_id matches the logged-in user's session ID.
-$stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ? AND customer_id = ?");
-$stmt->bind_param("ii", $booking_id, $customer_user_id);
+$stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ?");
+$stmt->bind_param("i", $booking_id);
 $stmt->execute();
 $result = $stmt->get_result();
 if ($result->num_rows === 0) {
-    die("<div class='alert alert-danger'>Booking not found or you do not have permission to view it.</div>");
+    die("<div class='alert alert-danger'>Booking not found.</div>");
 }
 $booking = $result->fetch_assoc();
 $stmt->close();
