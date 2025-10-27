@@ -91,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($role === 'provider') { // 'provider' corresponds to "Service Provider"
             $userRules = 1;
         } elseif ($role === 'client') { // 'client' corresponds to "Local Client"
-            $userRules = 2;
+            $userRules = 0;
         }
         // *** END: ADDED CODE FOR user_rules ***
 
