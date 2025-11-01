@@ -1,60 +1,151 @@
 <?php
 session_start();
 
-// This line is for demonstration purposes. In a real application, 
-// you would include your database connection and fetch the user's bookings.
-// include '../db.php'; 
+// 1. Include your database connection
+require_once '../db.php'; 
 
-// --- Placeholder Data ---
-// In a real application, you would fetch this from your database based on $_SESSION['user_id']
-$bookings = [
-    [
-        'id' => 1,
-        'service_name' => 'Leaky Faucet Repair',
-        'provider_name' => 'Juan Dela Cruz',
-        'provider_avatar' => 'https://i.pravatar.cc/150?u=juan',
-        'schedule_date' => date("Y-m-d H:i:s", strtotime("+3 days")),
-        'status' => 'Upcoming' // Can be: Upcoming, Completed, Cancelled
-    ],
-    [
-        'id' => 2,
-        'service_name' => 'Electrical Wiring Inspection',
-        'provider_name' => 'Maria Clara',
-        'provider_avatar' => 'https://i.pravatar.cc/150?u=maria',
-        'schedule_date' => date("Y-m-d H:i:s", strtotime("-1 week")),
-        'status' => 'Completed'
-    ],
-    [
-        'id' => 3,
-        'service_name' => 'Full House Repainting',
-        'provider_name' => 'Pedro Penduko',
-        'provider_avatar' => 'https://i.pravatar.cc/150?u=pedro',
-        'schedule_date' => date("Y-m-d H:i:s", strtotime("+10 days")),
-        'status' => 'Upcoming'
-    ],
-    [
-        'id' => 4,
-        'service_name' => 'Aircon Cleaning Service',
-        'provider_name' => 'Jose Rizal',
-        'provider_avatar' => 'https://i.pravatar.cc/150?u=jose',
-        'schedule_date' => date("Y-m-d H:i:s", strtotime("-2 days")),
-        'status' => 'Cancelled'
-    ],
-    [
-        'id' => 5,
-        'service_name' => 'Garden Landscaping',
-        'provider_name' => 'Gabriela Silang',
-        'provider_avatar' => 'https://i.pravatar.cc/150?u=gabriela',
-        'schedule_date' => date("Y-m-d H:i:s", strtotime("-1 month")),
-        'status' => 'Completed'
-    ],
-];
+// 2. Get customer ID from session
+$customer_id = $_SESSION['user_id'] ?? 0; // Default to 0 if not set
+
+// --- AJAX Endpoint Simulation for Detail Fetching ---
+if (isset($_GET['action']) && $_GET['action'] === 'get_booking_details' && isset($_GET['booking_id'])) {
+    header('Content-Type: application/json');
+    $booking_id = intval($_GET['booking_id']);
+
+    if ($booking_id > 0) {
+        // Query to get *all* necessary details for the modal
+        $sql_detail = "SELECT 
+            b.*,
+            s.service_name,
+            s.description AS service_description,
+            CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
+            u.email AS provider_email,
+            u.phone AS provider_phone,
+            COALESCE(u.profile_image, CONCAT('https://i.pravatar.cc/150?u=', u.id)) AS provider_avatar
+        FROM 
+            bookings AS b
+        JOIN 
+            service_providers AS sp ON b.provider_id = sp.id
+        JOIN 
+            users AS u ON sp.user_id = u.id
+        JOIN 
+            services AS s ON sp.service_id = s.service_id
+        WHERE 
+            b.id = ? AND b.customer_id = ?"; // Important: Check customer_id for security
+
+        $stmt_detail = $conn->prepare($sql_detail);
+        
+        if ($stmt_detail) {
+            $stmt_detail->bind_param("ii", $booking_id, $customer_id);
+            $stmt_detail->execute();
+            $result_detail = $stmt_detail->get_result();
+            
+            if ($result_detail && $row = $result_detail->fetch_assoc()) {
+                // Formatting dates and times for display
+                $row['display_date_from'] = date('F j, Y', strtotime($row['booking_date_from']));
+                $row['display_time_from'] = date('g:i A', strtotime($row['booking_time_from']));
+                $row['display_date_to'] = date('F j, Y', strtotime($row['booking_date_to']));
+                $row['display_time_to'] = date('g:i A', strtotime($row['booking_time_to']));
+                
+                echo json_encode(['success' => true, 'booking' => $row]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Booking not found or access denied.']);
+            }
+            $stmt_detail->close();
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error.']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID or customer ID.']);
+    }
+    $conn->close();
+    exit; // Stop further execution
+}
+// --- End of AJAX Endpoint Simulation ---
+
+
+// 3. Prepare and execute the query to fetch real data for the main list
+$bookings = [];
+
+if ($customer_id > 0) {
+    // Original query for the main list view
+    // Note: The original query assumes service_providers and services tables exist and are linked.
+    $sql = "SELECT 
+                b.id,
+                b.total_price, -- Added total_price for the list view for completeness
+                s.service_name,
+                CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
+                COALESCE(u.profile_image, CONCAT('https://i.pravatar.cc/150?u=', u.id)) AS provider_avatar,
+                CONCAT(b.booking_date_from, ' ', b.booking_time_from) AS schedule_date,
+                b.payment_status,
+                CASE 
+                    WHEN b.booking_status = 'pending' THEN 'Upcoming'
+                    WHEN b.booking_status = 'approved' THEN 'Upcoming'
+                    WHEN b.booking_status = 'completed' THEN 'Completed'
+                    WHEN b.booking_status = 'cancelled' THEN 'Cancelled'
+                    ELSE 'Upcoming'
+                END AS status 
+            FROM 
+                bookings AS b
+            JOIN 
+                service_providers AS sp ON b.provider_id = sp.id
+            JOIN 
+                users AS u ON sp.user_id = u.id
+            JOIN 
+                services AS s ON sp.service_id = s.service_id
+            WHERE 
+                b.customer_id = ?
+            ORDER BY 
+                STR_TO_DATE(CONCAT(b.booking_date_from, ' ', b.booking_time_from), '%Y-%m-%d %H:%i:%s') DESC";
+
+
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt) {
+        $stmt->bind_param("i", $customer_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                // Use the provider's avatar if available, otherwise fallback to a placeholder
+                if (empty($row['provider_avatar'])) {
+                    $row['provider_avatar'] = 'https://i.pravatar.cc/150?u=' . $row['id']; // Fallback
+                }
+                $bookings[] = $row;
+            }
+        }
+        $stmt->close();
+    } else {
+        // Handle query preparation error if needed
+        // error_log("Failed to prepare statement: " . $conn->error);
+    }
+}
+
+// Close connection only if it hasn't been closed in the AJAX block
+if ($conn->connect_errno === 0) {
+    $conn->close();
+}
+
+
+// --- End of Data Fetching ---
+
 
 function getStatusBadgeClass($status) {
     switch ($status) {
         case 'Upcoming': return 'bg-blue-100 text-blue-800';
         case 'Completed': return 'bg-green-100 text-green-800';
         case 'Cancelled': return 'bg-red-100 text-red-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+// NEW function to style the payment status
+function getPaymentStatusBadgeClass($status) {
+    switch (strtolower($status)) {
+        case 'paid': return 'bg-green-100 text-green-800';
+        case 'unpaid': return 'bg-yellow-100 text-yellow-800';
+        case 'failed': return 'bg-red-100 text-red-800';
         default: return 'bg-gray-100 text-gray-800';
     }
 }
@@ -79,14 +170,12 @@ function getStatusBadgeClass($status) {
 <body class="p-6 md:p-8">
 
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-800">My Bookings</h1>
             <p class="text-gray-500 mt-1">Review and manage all your service appointments.</p>
         </div>
 
         <?php if (empty($bookings)): ?>
-            <!-- Empty State -->
             <div class="text-center bg-white p-12 rounded-lg shadow-sm">
                 <i class="fas fa-calendar-times text-5xl text-gray-300 mb-4"></i>
                 <h2 class="text-2xl font-bold text-gray-700">No Bookings Yet</h2>
@@ -96,7 +185,6 @@ function getStatusBadgeClass($status) {
                 </a>
             </div>
         <?php else: ?>
-            <!-- Tabs -->
             <div class="mb-6 border-b border-gray-200">
                 <nav class="-mb-px flex space-x-6" id="booking-tabs">
                     <button data-tab="upcoming" class="tab-button active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm text-gray-500 hover:border-gray-300">Upcoming</button>
@@ -105,7 +193,6 @@ function getStatusBadgeClass($status) {
                 </nav>
             </div>
 
-            <!-- Booking Lists -->
             <div id="booking-lists">
                 <?php foreach ($bookings as $booking): ?>
                 <div class="booking-card bg-white p-5 rounded-lg shadow-sm mb-4 flex-col md:flex-row flex items-start md:items-center justify-between space-y-4 md:space-y-0" data-status="<?php echo strtolower($booking['status']); ?>">
@@ -117,23 +204,27 @@ function getStatusBadgeClass($status) {
                         </div>
                     </div>
                     <div class="flex flex-col md:items-center text-left md:text-center w-full md:w-auto">
-                         <p class="font-semibold text-gray-700"><?php echo date('D, M j, Y', strtotime($booking['schedule_date'])); ?></p>
-                         <p class="text-sm text-gray-500"><?php echo date('g:i A', strtotime($booking['schedule_date'])); ?></p>
+                           <p class="font-semibold text-gray-700"><?php echo date('D, M j, Y', strtotime($booking['schedule_date'])); ?></p>
+                           <p class="text-sm text-gray-500"><?php echo date('g:i A', strtotime($booking['schedule_date'])); ?></p>
                     </div>
-                    <div class="w-full md:w-auto text-center">
+
+                    <div class="w-full md:w-auto flex flex-col space-y-2 md:items-end">
                         <span class="px-3 py-1 text-sm font-medium rounded-full <?php echo getStatusBadgeClass($booking['status']); ?>">
                             <?php echo htmlspecialchars($booking['status']); ?>
+                        </span>
+                        <span class="px-3 py-1 text-sm font-medium rounded-full <?php echo getPaymentStatusBadgeClass($booking['payment_status']); ?>">
+                            <?php echo htmlspecialchars(ucfirst($booking['payment_status'])); ?>
                         </span>
                     </div>
                     <div class="flex items-center justify-end space-x-2 w-full md:w-auto">
                         <?php if ($booking['status'] == 'Upcoming'): ?>
                             <button onclick="openCancelModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg">Cancel</button>
-                            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Details</button>
+                            <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Details</button>
                         <?php elseif ($booking['status'] == 'Completed'): ?>
                             <button class="px-4 py-2 text-sm font-medium text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg">Leave a Review</button>
                             <button class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg">Book Again</button>
                         <?php else: // Cancelled ?>
-                             <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">View Details</button>
+                             <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">View Details</button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -142,12 +233,9 @@ function getStatusBadgeClass($status) {
         <?php endif; ?>
     </div>
 
-    <!-- Cancel Booking Modal -->
     <div id="cancel-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Backdrop -->
             <div id="modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 modal-backdrop" style="opacity: 0;"></div>
-            <!-- Modal Panel -->
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
             <div id="modal-panel" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform sm:my-8 sm:align-middle sm:max-w-lg sm:w-full modal-panel" style="opacity: 0; transform: translateY(20px);">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -177,7 +265,80 @@ function getStatusBadgeClass($status) {
             </div>
         </div>
     </div>
+    
+    <div id="details-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="details-modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div id="details-modal-backdrop" class="fixed inset-0 bg-gray-500 bg-opacity-75 modal-backdrop" style="opacity: 0;"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div id="details-modal-panel" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform sm:my-8 sm:align-middle sm:max-w-xl sm:w-full modal-panel" style="opacity: 0; transform: translateY(20px);">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4" id="details-modal-title">Booking Details</h3>
+                    
+                    <div id="booking-details-content" class="space-y-4">
+                        <div class="text-center py-8" id="details-loading">
+                            <i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i>
+                            <p class="text-gray-500 mt-2">Loading details...</p>
+                        </div>
+                        <div id="details-error" class="hidden text-center py-8">
+                            <i class="fas fa-times-circle text-2xl text-red-500"></i>
+                            <p class="text-red-500 mt-2">Failed to load booking details.</p>
+                        </div>
+                        
+                        <div id="details-data" class="hidden">
+                            <div class="border-b pb-3 mb-3">
+                                <p class="text-lg font-bold text-blue-600" id="detail-service-name"></p>
+                                <div class="flex items-center mt-2">
+                                    <img id="detail-provider-avatar" src="" alt="Provider" class="h-10 w-10 rounded-full object-cover mr-3">
+                                    <p class="text-md text-gray-600">Provider: <span class="font-semibold" id="detail-provider-name"></span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Schedule (From)</p>
+                                    <p class="font-semibold text-gray-800" id="detail-schedule-from"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Schedule (To)</p>
+                                    <p class="font-semibold text-gray-800" id="detail-schedule-to"></p>
+                                </div>
+                            </div>
 
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mt-3">Customer Name</p>
+                                <p class="font-semibold text-gray-800" id="detail-customer-name"></p>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-4 border-t pt-3 mt-3">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Total Price</p>
+                                    <p class="font-bold text-xl text-green-700" id="detail-total-price"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Booking Status</p>
+                                    <span id="detail-booking-status" class="px-3 py-1 text-xs font-medium rounded-full"></span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500">Payment Status</p>
+                                    <span id="detail-payment-status" class="px-3 py-1 text-xs font-medium rounded-full"></span>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-3 mt-3">
+                                <p class="text-sm font-medium text-gray-500">Special Request</p>
+                                <p class="text-gray-800 italic" id="detail-special-request"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="closeDetailsModal()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const tabs = document.querySelectorAll('.tab-button');
@@ -189,9 +350,12 @@ function getStatusBadgeClass($status) {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
 
+                // Check if any cards match the status
+                let hasMatches = false;
                 bookingCards.forEach(card => {
                     if (card.dataset.status === status) {
                         card.style.display = 'flex';
+                        hasMatches = true;
                     } else {
                         card.style.display = 'none';
                     }
@@ -203,31 +367,125 @@ function getStatusBadgeClass($status) {
             });
             
             // Initial filter on load
-            filterBookings(document.querySelector('.tab-button.active'));
+            if (document.querySelector('.tab-button.active')) {
+                filterBookings(document.querySelector('.tab-button.active'));
+            }
         });
 
-        // Modal Logic
-        const modal = document.getElementById('cancel-modal');
-        const modalBackdrop = document.getElementById('modal-backdrop');
-        const modalPanel = document.getElementById('modal-panel');
+        // --- Cancel Modal Logic (Existing) ---
+        const cancelModal = document.getElementById('cancel-modal');
+        const cancelModalBackdrop = document.getElementById('modal-backdrop');
+        const cancelModalPanel = document.getElementById('modal-panel');
         const bookingIdInput = document.getElementById('booking_id_to_cancel');
 
         function openCancelModal(bookingId) {
             bookingIdInput.value = bookingId;
-            modal.classList.remove('hidden');
+            cancelModal.classList.remove('hidden');
             setTimeout(() => {
-                modalBackdrop.style.opacity = 1;
-                modalPanel.style.opacity = 1;
-                modalPanel.style.transform = 'translateY(0)';
+                cancelModalBackdrop.style.opacity = 1;
+                cancelModalPanel.style.opacity = 1;
+                cancelModalPanel.style.transform = 'translateY(0)';
             }, 10);
         }
 
         function closeCancelModal() {
-            modalBackdrop.style.opacity = 0;
-            modalPanel.style.opacity = 0;
-            modalPanel.style.transform = 'translateY(20px)';
+            cancelModalBackdrop.style.opacity = 0;
+            cancelModalPanel.style.opacity = 0;
+            cancelModalPanel.style.transform = 'translateY(20px)';
             setTimeout(() => {
-                modal.classList.add('hidden');
+                cancelModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // --- NEW: Details Modal Logic ---
+        const detailsModal = document.getElementById('details-modal');
+        const detailsModalBackdrop = document.getElementById('details-modal-backdrop');
+        const detailsModalPanel = document.getElementById('details-modal-panel');
+        const detailsLoading = document.getElementById('details-loading');
+        const detailsError = document.getElementById('details-error');
+        const detailsData = document.getElementById('details-data');
+        
+        function getStatusBadgeClass(status) {
+            status = status.toLowerCase();
+            if (status === 'upcoming' || status === 'approved' || status === 'pending') return 'bg-blue-100 text-blue-800';
+            if (status === 'completed') return 'bg-green-100 text-green-800';
+            if (status === 'cancelled') return 'bg-red-100 text-red-800';
+            return 'bg-gray-100 text-gray-800';
+        }
+        
+        function getPaymentStatusBadgeClass(status) {
+            status = status.toLowerCase();
+            if (status === 'paid') return 'bg-green-100 text-green-800';
+            if (status === 'unpaid') return 'bg-yellow-100 text-yellow-800';
+            if (status === 'failed') return 'bg-red-100 text-red-800';
+            return 'bg-gray-100 text-gray-800';
+        }
+
+        async function openDetailsModal(bookingId) {
+            // 1. Show modal and loading state
+            detailsModal.classList.remove('hidden');
+            detailsLoading.classList.remove('hidden');
+            detailsError.classList.add('hidden');
+            detailsData.classList.add('hidden');
+            setTimeout(() => {
+                detailsModalBackdrop.style.opacity = 1;
+                detailsModalPanel.style.opacity = 1;
+                detailsModalPanel.style.transform = 'translateY(0)';
+            }, 10);
+
+            try {
+                // 2. Fetch data (AJAX to the PHP file itself)
+                const response = await fetch(`?action=get_booking_details&booking_id=${bookingId}`);
+                const data = await response.json();
+                
+                detailsLoading.classList.add('hidden');
+
+                if (data.success) {
+                    const booking = data.booking;
+                    
+                    // 3. Populate modal fields
+                    document.getElementById('detail-service-name').textContent = booking.service_name;
+                    document.getElementById('detail-provider-avatar').src = booking.provider_avatar;
+                    document.getElementById('detail-provider-name').textContent = booking.provider_name;
+                    
+                    document.getElementById('detail-schedule-from').textContent = `${booking.display_date_from} @ ${booking.display_time_from}`;
+                    document.getElementById('detail-schedule-to').textContent = `${booking.display_date_to} @ ${booking.display_time_to}`;
+
+                    document.getElementById('detail-customer-name').textContent = booking.customer_name;
+                    
+                    document.getElementById('detail-total-price').textContent = '₱' + parseFloat(booking.total_price).toFixed(2);
+                    
+                    // Status Badges
+                    const bookingStatusEl = document.getElementById('detail-booking-status');
+                    bookingStatusEl.textContent = booking.booking_status; // Use the raw status for display
+                    bookingStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(booking.booking_status)}`;
+
+                    const paymentStatusEl = document.getElementById('detail-payment-status');
+                    paymentStatusEl.textContent = booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1);
+                    paymentStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getPaymentStatusBadgeClass(booking.payment_status)}`;
+
+                    // Special Request
+                    document.getElementById('detail-special-request').textContent = booking.special_request || 'None';
+                    
+                    detailsData.classList.remove('hidden');
+                } else {
+                    detailsError.classList.remove('hidden');
+                    console.error('API Error:', data.message);
+                }
+
+            } catch (error) {
+                detailsLoading.classList.add('hidden');
+                detailsError.classList.remove('hidden');
+                console.error('Fetch Error:', error);
+            }
+        }
+
+        function closeDetailsModal() {
+            detailsModalBackdrop.style.opacity = 0;
+            detailsModalPanel.style.opacity = 0;
+            detailsModalPanel.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                detailsModal.classList.add('hidden');
             }, 300);
         }
     </script>
