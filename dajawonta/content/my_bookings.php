@@ -12,24 +12,30 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_booking_details' && isset
     header('Content-Type: application/json');
     $booking_id = intval($_GET['booking_id']);
 
-    if ($booking_id > 0) {
-        // Query to get *all* necessary details for the modal
+    if ($booking_id > 0 && $customer_id > 0) { // Also check if customer_id is valid
+        // --- !! MODIFIED SQL QUERY (Fix for "Failed to load") ---
+        // We now join the 'users' table twice:
+        // 1. as 'u_provider' to get the provider's name
+        // 2. as 'u_customer' to get the customer's name
         $sql_detail = "SELECT 
             b.*,
             s.service_name,
             s.description AS service_description,
-            CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
-            u.email AS provider_email,
-            u.phone AS provider_phone,
-            COALESCE(u.profile_image, CONCAT('https://i.pravatar.cc/150?u=', u.id)) AS provider_avatar
+            CONCAT(u_provider.first_name, ' ', u_provider.last_name) AS provider_name,
+            u_provider.email AS provider_email,
+            u_provider.phone AS provider_phone,
+            COALESCE(u_provider.profile_image, CONCAT('https://i.pravatar.cc/150?u=', u_provider.id)) AS provider_avatar,
+            CONCAT(u_customer.first_name, ' ', u_customer.last_name) AS customer_name 
         FROM 
             bookings AS b
         JOIN 
             service_providers AS sp ON b.provider_id = sp.id
         JOIN 
-            users AS u ON sp.user_id = u.id
+            users AS u_provider ON sp.user_id = u_provider.id
         JOIN 
             services AS s ON sp.service_id = s.service_id
+        JOIN
+            users AS u_customer ON b.customer_id = u_customer.id
         WHERE 
             b.id = ? AND b.customer_id = ?"; // Important: Check customer_id for security
 
@@ -49,14 +55,16 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_booking_details' && isset
                 
                 echo json_encode(['success' => true, 'booking' => $row]);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Booking not found or access denied.']);
+                // --- !! IMPROVED ERROR MESSAGE ---
+                echo json_encode(['success' => false, 'message' => "Booking not found or access denied. (Booking ID: $booking_id, Customer ID: $customer_id)"]);
             }
             $stmt_detail->close();
         } else {
-            echo json_encode(['success' => false, 'message' => 'Database error.']);
+            // --- !! IMPROVED ERROR MESSAGE ---
+            echo json_encode(['success' => false, 'message' => 'Database query preparation failed: ' . $conn->error]);
         }
     } else {
-        echo json_encode(['success' => false, 'message' => 'Invalid booking ID or customer ID.']);
+        echo json_encode(['success' => false, 'message' => "Invalid booking ID or customer is not logged in. (Customer ID: $customer_id)"]);
     }
     $conn->close();
     exit; // Stop further execution
@@ -68,16 +76,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_booking_details' && isset
 $bookings = [];
 
 if ($customer_id > 0) {
-    // Original query for the main list view
-    // Note: The original query assumes service_providers and services tables exist and are linked.
+    // --- !! MODIFIED SQL QUERY (Added b.booking_status) ---
+    // We need 'b.booking_status' (e.g., 'pending') for the new cancel logic
     $sql = "SELECT 
                 b.id,
-                b.total_price, -- Added total_price for the list view for completeness
+                b.total_price, 
+                b.booking_status, -- <-- ADDED THIS LINE
+                b.payment_status,
                 s.service_name,
                 CONCAT(u.first_name, ' ', u.last_name) AS provider_name,
                 COALESCE(u.profile_image, CONCAT('https://i.pravatar.cc/150?u=', u.id)) AS provider_avatar,
                 CONCAT(b.booking_date_from, ' ', b.booking_time_from) AS schedule_date,
-                b.payment_status,
                 CASE 
                     WHEN b.booking_status = 'pending' THEN 'Upcoming'
                     WHEN b.booking_status = 'approved' THEN 'Upcoming'
@@ -204,8 +213,8 @@ function getPaymentStatusBadgeClass($status) {
                         </div>
                     </div>
                     <div class="flex flex-col md:items-center text-left md:text-center w-full md:w-auto">
-                           <p class="font-semibold text-gray-700"><?php echo date('D, M j, Y', strtotime($booking['schedule_date'])); ?></p>
-                           <p class="text-sm text-gray-500"><?php echo date('g:i A', strtotime($booking['schedule_date'])); ?></p>
+                            <p class="font-semibold text-gray-700"><?php echo date('D, M j, Y', strtotime($booking['schedule_date'])); ?></p>
+                            <p class="text-sm text-gray-500"><?php echo date('g:i A', strtotime($booking['schedule_date'])); ?></p>
                     </div>
 
                     <div class="w-full md:w-auto flex flex-col space-y-2 md:items-end">
@@ -217,15 +226,27 @@ function getPaymentStatusBadgeClass($status) {
                         </span>
                     </div>
                     <div class="flex items-center justify-end space-x-2 w-full md:w-auto">
-                        <?php if ($booking['status'] == 'Upcoming'): ?>
+                        
+                        <?php 
+                        // Condition: Can cancel if payment is 'unpaid' OR booking status is 'pending'
+                        $can_cancel = (strtolower($booking['payment_status']) == 'unpaid' || strtolower($booking['booking_status']) == 'pending');
+                        
+                        if ($can_cancel && strtolower($booking['status']) != 'cancelled'): 
+                        ?>
                             <button onclick="openCancelModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg">Cancel</button>
                             <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Details</button>
+                        
+                        <?php elseif ($booking['status'] == 'Upcoming'): // Upcoming but cannot be cancelled (e.g., paid and approved) ?>
+                            <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">Details</button>
+                        
                         <?php elseif ($booking['status'] == 'Completed'): ?>
                             <button class="px-4 py-2 text-sm font-medium text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg">Leave a Review</button>
                             <button class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg">Book Again</button>
+                        
                         <?php else: // Cancelled ?>
-                             <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">View Details</button>
+                            <button onclick="openDetailsModal(<?php echo $booking['id']; ?>)" class_name="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">View Details</button>
                         <?php endif; ?>
+
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -281,7 +302,7 @@ function getPaymentStatusBadgeClass($status) {
                         </div>
                         <div id="details-error" class="hidden text-center py-8">
                             <i class="fas fa-times-circle text-2xl text-red-500"></i>
-                            <p class="text-red-500 mt-2">Failed to load booking details.</p>
+                            <p class="text-red-500 mt-2" id="details-error-message">Failed to load booking details.</p>
                         </div>
                         
                         <div id="details-data" class="hidden">
@@ -339,156 +360,172 @@ function getPaymentStatusBadgeClass($status) {
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.tab-button');
-            const bookingCards = document.querySelectorAll('.booking-card');
+   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab-button');
+        const bookingCards = document.querySelectorAll('.booking-card');
 
-            function filterBookings(tab) {
-                const status = tab.dataset.tab;
+        // --- Tab Filtering Logic ---
+        function filterBookings(tab) {
+            const status = tab.dataset.tab;
 
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+            // Update tab styling
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-                // Check if any cards match the status
-                let hasMatches = false;
-                bookingCards.forEach(card => {
-                    if (card.dataset.status === status) {
-                        card.style.display = 'flex';
-                        hasMatches = true;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            }
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => filterBookings(tab));
-            });
-            
-            // Initial filter on load
-            if (document.querySelector('.tab-button.active')) {
-                filterBookings(document.querySelector('.tab-button.active'));
-            }
-        });
-
-        // --- Cancel Modal Logic (Existing) ---
-        const cancelModal = document.getElementById('cancel-modal');
-        const cancelModalBackdrop = document.getElementById('modal-backdrop');
-        const cancelModalPanel = document.getElementById('modal-panel');
-        const bookingIdInput = document.getElementById('booking_id_to_cancel');
-
-        function openCancelModal(bookingId) {
-            bookingIdInput.value = bookingId;
-            cancelModal.classList.remove('hidden');
-            setTimeout(() => {
-                cancelModalBackdrop.style.opacity = 1;
-                cancelModalPanel.style.opacity = 1;
-                cancelModalPanel.style.transform = 'translateY(0)';
-            }, 10);
-        }
-
-        function closeCancelModal() {
-            cancelModalBackdrop.style.opacity = 0;
-            cancelModalPanel.style.opacity = 0;
-            cancelModalPanel.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                cancelModal.classList.add('hidden');
-            }, 300);
-        }
-        
-        // --- NEW: Details Modal Logic ---
-        const detailsModal = document.getElementById('details-modal');
-        const detailsModalBackdrop = document.getElementById('details-modal-backdrop');
-        const detailsModalPanel = document.getElementById('details-modal-panel');
-        const detailsLoading = document.getElementById('details-loading');
-        const detailsError = document.getElementById('details-error');
-        const detailsData = document.getElementById('details-data');
-        
-        function getStatusBadgeClass(status) {
-            status = status.toLowerCase();
-            if (status === 'upcoming' || status === 'approved' || status === 'pending') return 'bg-blue-100 text-blue-800';
-            if (status === 'completed') return 'bg-green-100 text-green-800';
-            if (status === 'cancelled') return 'bg-red-100 text-red-800';
-            return 'bg-gray-100 text-gray-800';
-        }
-        
-        function getPaymentStatusBadgeClass(status) {
-            status = status.toLowerCase();
-            if (status === 'paid') return 'bg-green-100 text-green-800';
-            if (status === 'unpaid') return 'bg-yellow-100 text-yellow-800';
-            if (status === 'failed') return 'bg-red-100 text-red-800';
-            return 'bg-gray-100 text-gray-800';
-        }
-
-        async function openDetailsModal(bookingId) {
-            // 1. Show modal and loading state
-            detailsModal.classList.remove('hidden');
-            detailsLoading.classList.remove('hidden');
-            detailsError.classList.add('hidden');
-            detailsData.classList.add('hidden');
-            setTimeout(() => {
-                detailsModalBackdrop.style.opacity = 1;
-                detailsModalPanel.style.opacity = 1;
-                detailsModalPanel.style.transform = 'translateY(0)';
-            }, 10);
-
-            try {
-                // 2. Fetch data (AJAX to the PHP file itself)
-                const response = await fetch(`?action=get_booking_details&booking_id=${bookingId}`);
-                const data = await response.json();
-                
-                detailsLoading.classList.add('hidden');
-
-                if (data.success) {
-                    const booking = data.booking;
-                    
-                    // 3. Populate modal fields
-                    document.getElementById('detail-service-name').textContent = booking.service_name;
-                    document.getElementById('detail-provider-avatar').src = booking.provider_avatar;
-                    document.getElementById('detail-provider-name').textContent = booking.provider_name;
-                    
-                    document.getElementById('detail-schedule-from').textContent = `${booking.display_date_from} @ ${booking.display_time_from}`;
-                    document.getElementById('detail-schedule-to').textContent = `${booking.display_date_to} @ ${booking.display_time_to}`;
-
-                    document.getElementById('detail-customer-name').textContent = booking.customer_name;
-                    
-                    document.getElementById('detail-total-price').textContent = '₱' + parseFloat(booking.total_price).toFixed(2);
-                    
-                    // Status Badges
-                    const bookingStatusEl = document.getElementById('detail-booking-status');
-                    bookingStatusEl.textContent = booking.booking_status; // Use the raw status for display
-                    bookingStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(booking.booking_status)}`;
-
-                    const paymentStatusEl = document.getElementById('detail-payment-status');
-                    paymentStatusEl.textContent = booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1);
-                    paymentStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getPaymentStatusBadgeClass(booking.payment_status)}`;
-
-                    // Special Request
-                    document.getElementById('detail-special-request').textContent = booking.special_request || 'None';
-                    
-                    detailsData.classList.remove('hidden');
+            // Show/Hide booking cards based on selected status
+            bookingCards.forEach(card => {
+                if (card.dataset.status === status) {
+                    card.style.display = 'flex';
                 } else {
-                    detailsError.classList.remove('hidden');
-                    console.error('API Error:', data.message);
+                    card.style.display = 'none';
                 }
+            });
+        }
 
-            } catch (error) {
-                detailsLoading.classList.add('hidden');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => filterBookings(tab));
+        });
+        
+        // **Initial filter on load**: Ensures only 'Upcoming' bookings are shown when the page first loads.
+        if (document.querySelector('.tab-button.active')) {
+            filterBookings(document.querySelector('.tab-button.active'));
+        }
+    });
+
+    // --- Modal Utility Functions (Must be global to be called by inline onclick) ---
+
+    function getStatusBadgeClass(status) {
+        status = status.toLowerCase();
+        // Matching the PHP logic for status colors
+        if (status === 'upcoming' || status === 'approved' || status === 'pending') return 'bg-blue-100 text-blue-800';
+        if (status === 'completed') return 'bg-green-100 text-green-800';
+        if (status === 'cancelled') return 'bg-red-100 text-red-800';
+        return 'bg-gray-100 text-gray-800';
+    }
+    
+    function getPaymentStatusBadgeClass(status) {
+        status = status.toLowerCase();
+        // Matching the PHP logic for payment status colors
+        if (status === 'paid') return 'bg-green-100 text-green-800';
+        if (status === 'unpaid') return 'bg-yellow-100 text-yellow-800';
+        if (status === 'failed') return 'bg-red-100 text-red-800';
+        return 'bg-gray-100 text-gray-800';
+    }
+
+
+    // --- 1. Cancel Modal Logic ---
+    const cancelModal = document.getElementById('cancel-modal');
+    const cancelModalBackdrop = document.getElementById('modal-backdrop');
+    const cancelModalPanel = document.getElementById('modal-panel');
+    const bookingIdInput = document.getElementById('booking_id_to_cancel');
+
+    window.openCancelModal = function(bookingId) {
+        bookingIdInput.value = bookingId;
+        cancelModal.classList.remove('hidden');
+        setTimeout(() => {
+            cancelModalBackdrop.style.opacity = 1;
+            cancelModalPanel.style.opacity = 1;
+            cancelModalPanel.style.transform = 'translateY(0)';
+        }, 10);
+    }
+
+    window.closeCancelModal = function() {
+        cancelModalBackdrop.style.opacity = 0;
+        cancelModalPanel.style.opacity = 0;
+        cancelModalPanel.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            cancelModal.classList.add('hidden');
+        }, 300);
+    }
+
+
+    // --- 2. Details Modal Logic (AJAX Fetching) ---
+    const detailsModal = document.getElementById('details-modal');
+    const detailsModalBackdrop = document.getElementById('details-modal-backdrop');
+    const detailsModalPanel = document.getElementById('details-modal-panel');
+    const detailsLoading = document.getElementById('details-loading');
+    const detailsError = document.getElementById('details-error');
+    const detailsErrorMessage = document.getElementById('details-error-message');
+    const detailsData = document.getElementById('details-data');
+    
+    window.openDetailsModal = async function(bookingId) {
+        // 1. Setup initial modal state (show loading)
+        detailsModal.classList.remove('hidden');
+        detailsLoading.classList.remove('hidden');
+        detailsError.classList.add('hidden');
+        detailsData.classList.add('hidden');
+        detailsErrorMessage.textContent = 'Failed to load booking details.'; // Reset error message
+        
+        // Animate modal open
+        setTimeout(() => {
+            detailsModalBackdrop.style.opacity = 1;
+            detailsModalPanel.style.opacity = 1;
+            detailsModalPanel.style.transform = 'translateY(0)';
+        }, 10);
+
+        try {
+            // 2. Fetch data via AJAX (calls the PHP endpoint at the top of the file)
+            const response = await fetch(`?action=get_booking_details&booking_id=${bookingId}`);
+            const data = await response.json();
+            
+            detailsLoading.classList.add('hidden');
+
+            if (data.success) {
+                const booking = data.booking;
+                
+                // 3. Populate modal fields with fetched data
+                document.getElementById('detail-service-name').textContent = booking.service_name;
+                document.getElementById('detail-provider-avatar').src = booking.provider_avatar;
+                document.getElementById('detail-provider-name').textContent = booking.provider_name;
+                
+                document.getElementById('detail-schedule-from').textContent = `${booking.display_date_from} @ ${booking.display_time_from}`;
+                document.getElementById('detail-schedule-to').textContent = `${booking.display_date_to} @ ${booking.display_time_to}`;
+
+                // **Fixed field**: Customer Name (thanks to the updated SQL query!)
+                document.getElementById('detail-customer-name').textContent = booking.customer_name; 
+                
+                document.getElementById('detail-total-price').textContent = '₱' + parseFloat(booking.total_price).toFixed(2);
+                
+                // Status Badges
+                const bookingStatusEl = document.getElementById('detail-booking-status');
+                bookingStatusEl.textContent = booking.booking_status.charAt(0).toUpperCase() + booking.booking_status.slice(1);
+                bookingStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeClass(booking.booking_status)}`;
+
+                const paymentStatusEl = document.getElementById('detail-payment-status');
+                paymentStatusEl.textContent = booking.payment_status.charAt(0).toUpperCase() + booking.payment_status.slice(1);
+                paymentStatusEl.className = `px-3 py-1 text-xs font-medium rounded-full ${getPaymentStatusBadgeClass(booking.payment_status)}`;
+
+                document.getElementById('detail-special-request').textContent = booking.special_request || 'None';
+                
+                // Show the data section
+                detailsData.classList.remove('hidden');
+
+            } else {
+                // Handle API error (e.g., "Booking not found or access denied")
+                detailsErrorMessage.textContent = data.message || 'Failed to load booking details due to server issue.';
                 detailsError.classList.remove('hidden');
-                console.error('Fetch Error:', error);
+                console.error('API Error:', data.message);
             }
-        }
 
-        function closeDetailsModal() {
-            detailsModalBackdrop.style.opacity = 0;
-            detailsModalPanel.style.opacity = 0;
-            detailsModalPanel.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-                detailsModal.classList.add('hidden');
-            }, 300);
+        } catch (error) {
+            // Handle network or JSON parsing error
+            detailsLoading.classList.add('hidden');
+            detailsErrorMessage.textContent = 'A network error or unexpected response occurred.';
+            detailsError.classList.remove('hidden');
+            console.error('Fetch Error:', error);
         }
-    </script>
+    }
+
+    window.closeDetailsModal = function() {
+        detailsModalBackdrop.style.opacity = 0;
+        detailsModalPanel.style.opacity = 0;
+        detailsModalPanel.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            detailsModal.classList.add('hidden');
+        }, 300);
+    }
+</script>
 
 </body>
 </html>
