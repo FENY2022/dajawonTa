@@ -269,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $_SESSION['toast_message'] = $notification_message;
     $_SESSION['toast_type'] = $is_success ? 'success' : 'danger';
 
-    header("Location: customer_booking_details.php?booking_id=$booking_id");
+    header("Location: provider_booking_details.php?booking_id=$booking_id");
     exit;
 }
 
