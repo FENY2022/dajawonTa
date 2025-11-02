@@ -120,6 +120,9 @@ $conn->close();
             <form action="process_booking.php" method="POST">
                 <input type="hidden" name="provider_id" value="<?php echo htmlspecialchars($provider['id']); ?>">
                 
+
+                <input type="hidden" name="service_id" value="<?php echo htmlspecialchars($provider['service_id']); ?>">
+
                 <div class="form-group">
                     <label for="customer_name"><i class="fas fa-user"></i> Your Name</label>
                     <input type="text" id="customer_name" name="customer_name" class="form-control" required>

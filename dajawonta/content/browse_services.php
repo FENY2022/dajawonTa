@@ -3,6 +3,34 @@
 // Assuming db.php is one directory up, just like in your dashboard.php
 require_once '../db.php'; 
 
+/**
+ * AI-Generated Icon Function:
+ * Maps service names to relevant Font Awesome 6 icons for visual representation.
+ * @param string $serviceName The name of the service (e.g., 'Plumbing', 'Electrical').
+ * @return string The Font Awesome icon class (e.g., 'fa-toilet').
+ */
+function getServiceIcon($serviceName) {
+    // Convert to lowercase for case-insensitive matching
+    $name = strtolower($serviceName);
+
+    // AI/Logic-based icon selection
+    if (strpos($name, 'plumbing') !== false || strpos($name, 'leak') !== false) {
+        return 'fa-faucet-drip text-blue-500'; // Plumbing icon
+    } elseif (strpos($name, 'electrical') !== false || strpos($name, 'wiring') !== false) {
+        return 'fa-lightbulb text-yellow-600'; // Electrical icon
+    } elseif (strpos($name, 'carpentry') !== false || strpos($name, 'furniture') !== false) {
+        return 'fa-hammer text-amber-700'; // Carpentry icon
+    } elseif (strpos($name, 'painting') !== false || strpos($name, 'renovation') !== false) {
+        return 'fa-paint-roller text-pink-500'; // Painting/Renovation icon
+    } elseif (strpos($name, 'masonry') !== false || strpos($name, 'welding') !== false || strpos($name, 'construction') !== false) {
+        return 'fa-helmet-safety text-gray-500'; // Construction/Masonry icon
+    } elseif (strpos($name, 'shoe') !== false || strpos($name, 'repair') !== false) {
+        return 'fa-shoe-prints text-red-600'; // Shoe Repair icon
+    } else {
+        return 'fa-screwdriver-wrench text-indigo-500'; // Default tool icon
+    }
+}
+
 // 2. FETCH ALL SERVICES
 $services = [];
 $sql = "SELECT service_id, service_name, description FROM services ORDER BY service_name";
@@ -17,7 +45,8 @@ if ($result && $result->num_rows > 0) {
 $conn->close();
 
 // Fallback link for the 'Back' button
-$dashboard_link = 'dashboard_content.php'; 
+$dashboard_link = 'dashboard.php'; 
+// NOTE: I changed this back to 'dashboard.php' as per your original file structure for consistency.
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,6 +85,8 @@ $dashboard_link = 'dashboard_content.php';
             border-radius: 12px;
             border: 1px solid #e5e7eb;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* Add some padding to make room for the icon */
+            padding-top: 2rem; 
         }
 
         .service-card::before {
@@ -99,9 +130,15 @@ $dashboard_link = 'dashboard_content.php';
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     
                     <?php foreach ($services as $service): ?>
+                    <?php $icon_class = getServiceIcon($service['service_name']); ?>
+                    
                     <a href="serviceProvider.php?service_id=<?php echo $service['service_id']; ?>"
                        class="service-card p-5 block quick-action-modal"
                        data-title="<?php echo htmlspecialchars($service['service_name']); ?>">
+                        
+                        <div class="mb-3">
+                            <i class="fas <?php echo $icon_class; ?> text-3xl"></i>
+                        </div>
                         
                         <h3 class="font-bold text-lg text-gray-800"><?php echo htmlspecialchars($service['service_name']); ?></h3>
                         <p class="text-sm text-gray-600 mt-2 line-clamp-3"><?php echo htmlspecialchars($service['description']); ?></p>

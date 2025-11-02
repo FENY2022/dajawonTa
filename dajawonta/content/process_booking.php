@@ -14,15 +14,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // 1. Get and sanitize form data
-    $customer_id = $_SESSION['user_id']; // NEW: Logged-in customer
-    $role = isset($_SESSION['user_rules']) ? $_SESSION['user_rules'] : 'customer'; // ✅ NEW ROW: Role from session
+    $customer_id = $_SESSION['user_id'];
+    $role = isset($_SESSION['user_rules']) ? $_SESSION['user_rules'] : 'customer';
     $provider_id = $_POST['provider_id'];
     $customer_name = trim($_POST['customer_name']);
     $customer_email = trim($_POST['customer_email']);
     $customer_phone = trim($_POST['customer_phone']);
     $booking_date_from = $_POST['booking_date_from'];
     $booking_date_to = $_POST['booking_date_to'];
-    
+    $service_id = $_POST['service_id']; // This is now being used!
+
     // Time range
     $booking_time_from = $_POST['booking_time_from'];
     $booking_time_to = $_POST['booking_time_to'];
@@ -33,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (
         empty($provider_id) || empty($customer_name) || empty($customer_email) ||
         empty($customer_phone) || empty($booking_date_from) || empty($booking_date_to) ||
-        empty($booking_time_from) || empty($booking_time_to)
+        empty($booking_time_from) || empty($booking_time_to) || empty($service_id) // Added check for service_id
     ) {
         $_SESSION['message'] = "All required fields must be filled.";
         $_SESSION['msg_type'] = "danger";
@@ -78,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $provider = $result->fetch_assoc();
     $stmt->close();
 
-    $total_price = $provider['price'];
+    $total_price = $provider['price']; // Note: This is the provider's *rate*
 
     $req_date_from_ts = strtotime($booking_date_from);
     $req_date_to_ts = strtotime($booking_date_to);
@@ -104,20 +105,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
-    // 4. Insert booking (with customer_id and role)
+    // 4. Insert booking (with customer_id, role, and service_id)
     $sql = "INSERT INTO bookings (
-                customer_id, provider_id, role, customer_name, customer_email, customer_phone, 
+                customer_id, provider_id, service_id, role, customer_name, customer_email, customer_phone, 
                 booking_date_from, booking_date_to, booking_time_from, booking_time_to, 
                 special_request, total_price, booking_status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')";
             
     $stmt = $conn->prepare($sql);
 
+    // Bind parameters - "iiisssssssssd"
     $stmt->bind_param(
-        "iisssssssssd", 
+        "iiisssssssssd", 
         $customer_id,
         $provider_id,
+        $service_id, // <-- Here is the change
         $role, 
         $customer_name,
         $customer_email,

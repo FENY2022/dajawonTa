@@ -21,8 +21,20 @@ $profile_query->execute();
 $profile_result = $profile_query->get_result();
 $profile = $profile_result->fetch_assoc();
 
-// Fetch all bookings for the user
-$bookings_query = $conn->prepare("SELECT * FROM bookings WHERE customer_id = ? ORDER BY created_at DESC");
+// Fetch all bookings for the user, joining with services table
+$bookings_query = $conn->prepare("
+    SELECT 
+        b.*, 
+        s.service_name 
+    FROM 
+        bookings AS b
+    LEFT JOIN 
+        services AS s ON b.service_id = s.service_id
+    WHERE 
+        b.customer_id = ? 
+    ORDER BY 
+        b.created_at DESC
+");
 $bookings_query->bind_param("i", $customer_id);
 $bookings_query->execute();
 $bookings = $bookings_query->get_result();
@@ -216,40 +228,7 @@ $bookings = $bookings_query->get_result();
     </style>
 </head>
 <body>
-    <!-- Navigation
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="#">
-                <i class="bi bi-calendar-check me-2"></i>Booking System
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">
-                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="bookings.php">
-                            <i class="bi bi-journal-text me-1"></i> Bookings
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php">
-                            <i class="bi bi-box-arrow-right me-1"></i> Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav> -->
-
-    <!-- Main Content -->
     <div class="container py-4">
-        <!-- Page Header -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center">
@@ -264,7 +243,6 @@ $bookings = $bookings_query->get_result();
             </div>
         </div>
 
-        <!-- Stats Cards -->
         <div class="row mb-4">
             <?php
             // Count different booking statuses
@@ -328,7 +306,6 @@ $bookings = $bookings_query->get_result();
         </div>
 
         <div class="row">
-            <!-- Profile Card -->
             <div class="col-lg-4 mb-4">
                 <div class="card profile-card">
                     <div class="card-body p-4">
@@ -374,7 +351,6 @@ $bookings = $bookings_query->get_result();
                 </div>
             </div>
 
-            <!-- Bookings Card -->
             <div class="col-lg-8">
                 <div class="card bookings-card">
                     <div class="card-body p-4">
@@ -392,6 +368,7 @@ $bookings = $bookings_query->get_result();
                                     <thead class="table-light">
                                         <tr>
                                             <th>#</th>
+                                            <th>Service</th>
                                             <th>Date</th>
                                             <th>Time</th>
                                             <th>Status</th>
@@ -407,6 +384,7 @@ $bookings = $bookings_query->get_result();
                                         ?>
                                             <tr>
                                                 <td class="fw-medium"><?= $count++ ?></td>
+                                                <td class="fw-medium"><?= htmlspecialchars($row['service_name'] ?? 'N/A') ?></td>
                                                 <td>
                                                     <div class="d-flex flex-column">
                                                         <span class="fw-medium"><?= date('M d, Y', strtotime($row['booking_date_from'])) ?></span>
@@ -445,6 +423,7 @@ $bookings = $bookings_query->get_result();
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#bookingDetailsModal"
                                                             data-bs-id="<?= $row['id'] ?>"
+                                                            data-bs-service-name="<?= htmlspecialchars($row['service_name'] ?? 'N/A') ?>"
                                                             data-bs-name="<?= htmlspecialchars($row['customer_name']) ?>"
                                                             data-bs-email="<?= htmlspecialchars($row['customer_email']) ?>"
                                                             data-bs-phone="<?= htmlspecialchars($row['customer_phone']) ?>"
@@ -483,7 +462,6 @@ $bookings = $bookings_query->get_result();
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="footer mt-5">
         <div class="container">
             <div class="row">
@@ -497,7 +475,6 @@ $bookings = $bookings_query->get_result();
         </div>
     </footer>
 
-    <!-- Booking Details Modal -->
     <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -535,6 +512,10 @@ $bookings = $bookings_query->get_result();
                             <h6 class="fw-bold text-primary mb-3">
                                 <i class="bi bi-calendar-event me-2"></i> Booking Details
                             </h6>
+                            <div class="mb-2">
+                                <span class="fw-medium">Service:</span>
+                                <span id="modal-service-name" class="ms-2 fw-bold"></span>
+                            </div>
                             <div class="mb-2">
                                 <span class="fw-medium">Booking Dates:</span>
                                 <span id="modal-booking-dates" class="ms-2"></span>
@@ -603,6 +584,7 @@ $bookings = $bookings_query->get_result();
 
             // Extract info from data-bs-* attributes
             var id = button.getAttribute('data-bs-id');
+            var serviceName = button.getAttribute('data-bs-service-name');
             var name = button.getAttribute('data-bs-name');
             var email = button.getAttribute('data-bs-email');
             var phone = button.getAttribute('data-bs-phone');
@@ -621,6 +603,7 @@ $bookings = $bookings_query->get_result();
             // Update the modal's content
             var modal = this;
             modal.querySelector('#modal-booking-id').textContent = id;
+            modal.querySelector('#modal-service-name').textContent = serviceName;
             modal.querySelector('#modal-customer-name').textContent = name;
             modal.querySelector('#modal-customer-email').textContent = email;
             modal.querySelector('#modal-customer-phone').textContent = phone;
