@@ -66,7 +66,7 @@ function getQuickActions($role) {
             return [
                 ['icon' => 'fa-users-cog', 'label' => 'Manage Users', 'link' => 'user_management.php'],
                 ['icon' => 'fa-list-alt', 'label' => 'Manage Services', 'link' => 'service_management.php'],
-                ['icon' => 'fa-chart-line', 'label' => 'View Analytics', 'link' => 'dashboard.php?action=analytics']
+                ['icon' => 'fa-chart-line', 'label' => 'View Analytics', 'link' => 'analytics.php']
             ];
         default: return [];
     }
