@@ -173,7 +173,7 @@ $conn->close();
                 </div>
                 <div class="form-group">
                     <label for="special_request"><i class="fas fa-comment-alt"></i> Special Request (Optional)</label>
-                    <textarea id="special_request" name="special_request" class="form-control" rows="4" placeholder="e.g., allergies, specific instructions, etc."></textarea>
+                    <textarea id="special_request" name="special_request" class="form-control" rows="4" placeholder="e.g., specific instructions, etc."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle"></i> Submit Booking Request</button>
             </form>

@@ -183,6 +183,18 @@ $result = $conn->query($sql);
         .modal-body p {
             font-size: 1.1rem;
         }
+        /* Style for document thumbnails in modal */
+        .doc-thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        .doc-thumbnail:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -218,7 +230,8 @@ $result = $conn->query($sql);
                                 data-description="<?php echo htmlspecialchars($row['service_description']); ?>"
                                 data-date-range="<?php echo date("F j, Y", strtotime($row['available_date_from'])) . " to " . date("F j, Y", strtotime($row['available_date_to'])); ?>"
                                 data-time-range="<?php echo date("g:i A", strtotime($row['available_time_from'])) . " to " . date("g:i A", strtotime($row['available_time_to'])); ?>"
-                                data-price="₱<?php echo number_format($row['price'], 2); ?>">
+                                data-price="₱<?php echo number_format($row['price'], 2); ?>"
+                                data-documents="<?php echo htmlspecialchars($row['legal_documents']); // ?>">
                             <i class="fas fa-clipboard-check"></i> Review and Approve
                         </button>
                     </div>
@@ -274,12 +287,44 @@ $result = $conn->query($sql);
         const button = event.relatedTarget;
         const modalDetails = this.querySelector('#modal-details');
         
-        // --- ADDED: Get new data attributes from the button ---
+        // Get existing data attributes from the button
         const dateRange = button.getAttribute('data-date-range');
         const timeRange = button.getAttribute('data-time-range');
         const price = button.getAttribute('data-price');
         
-        // Populate modal with all data
+        // --- MODIFIED SECTION: Handle legal documents ---
+        const documentsJson = button.getAttribute('data-documents');
+        const basePath = '../uploads/legal_documents/';
+        let documentsHtml = '';
+
+        if (documentsJson && documentsJson !== 'NULL') { // Check if not empty or the literal string "NULL"
+            try {
+                const docArray = JSON.parse(documentsJson);
+                if (Array.isArray(docArray) && docArray.length > 0) {
+                    documentsHtml = '<p><strong>Legal Documents:</strong></p><div class="d-flex flex-wrap gap-2">';
+                    docArray.forEach(docName => {
+                        const docUrl = basePath + encodeURIComponent(docName);
+                        // Create a thumbnail image that links to the full document
+                        documentsHtml += `
+                            <a href="${docUrl}" target="_blank" title="View ${docName}">
+                                <img src="${docUrl}" alt="Legal Document" class="doc-thumbnail">
+                            </a>
+                        `;
+                    });
+                    documentsHtml += '</div>';
+                } else {
+                    documentsHtml = '<p><strong>Legal Documents:</strong> None provided.</p>';
+                }
+            } catch (e) {
+                console.error('Error parsing legal_documents JSON:', e, documentsJson);
+                documentsHtml = '<p><strong>Legal Documents:</strong> <span class="text-danger">Error loading documents.</span></p>';
+            }
+        } else {
+            documentsHtml = '<p><strong>Legal Documents:</strong> None provided.</p>';
+        }
+        // --- END OF MODIFIED SECTION ---
+
+        // Populate modal with all data, including the new documents section
         modalDetails.innerHTML = `
             <p><strong>Company:</strong> ${button.getAttribute('data-company')}</p>
             <p><strong>Service:</strong> ${button.getAttribute('data-service')}</p>
@@ -288,6 +333,8 @@ $result = $conn->query($sql);
             <p><strong>Dates:</strong> ${dateRange}</p>
             <p><strong>Times:</strong> ${timeRange}</p>
             <p><strong>Price:</strong> ${price}</p>
+            <hr>
+            ${documentsHtml} 
         `;
         
         this.querySelector('#provider-id-input').value = button.getAttribute('data-id');
