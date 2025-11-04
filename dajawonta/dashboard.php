@@ -47,33 +47,22 @@ $action = $_GET['action'] ?? 'dashboard';
 // List of allowed pages to prevent security issues like file inclusion
 $allowed_pages = [
     'dashboard' => 'content/dashboard_content.php',
-    // Client pages (Role '1') - Note: Your comment says '1' is Client but your code uses '0'. I'm following the code.
+    // Client pages (Role '0')
     'browse_services' => 'content/browse_services.php',
     'my_bookings' => 'content/my_bookings.php',
-    'my_reviews' => 'content/my_reviews.php',
-    // Provider pages (Role '0') - Note: Your comment says '0' is Provider but your code uses '1'. I'm following the code.
+    'my_reviews' => 'content/my_reviews.php', // This is where clients SUBMIT reviews
+    'customer_booking_details' => 'content/customer_booking_details.php?booking_id=' . urlencode($booking_id),
+
+    // Provider pages (Role '1')
     'view_listings' => 'content/view_listings.php?provider_id=' . urlencode($provider_id),
     'addNewservice.php' => 'content/addNewservice.php',
-    'my_ratings' => 'content/my_ratings.php',
+    'my_ratings' => 'content/my_ratings.php', // This is where providers VIEW their ratings
     'view_booking_history' => 'content/view_booking_history.php',
     'booking_details' => 'content/booking_details.php',
-
-    'customer_booking_details' => 'content/customer_booking_details.php?booking_id=' . urlencode($booking_id),
-    // 'payment_success' => 'content/payment_success.php?booking_id=' . urlencode($booking_id),
-    // 'payment_cancel' => 'content/payment_cancel.php?booking_id=' . urlencode($booking_id),
-
-
-    
-
-    
-
     'reschedule_option' => 'content/reschedule_option.php',
     'payment_status' => 'content/payment_status.php',
     'provider_booking_details' => 'content/provider_booking_details.php?provider_id=' . urlencode($provider_id) . '&booking_id=' . urlencode($booking_id),
-
-
-
-
+    
     // Admin pages (Role '2')
     'user_management' => 'content/user_management.php',
     'service_management' => 'content/service_management.php',
@@ -81,11 +70,13 @@ $allowed_pages = [
     'analytics' => 'content/analytics.php',
     'confirmService_providers' => 'content/confirmService_providers.php',
 
-
     // Common pages
     'profile' => 'content/profile.php',
     'settings' => 'content/profile.php',
     'system_settings' => 'content/system_settings.php',
+
+    // Backend/logic (though not directly loaded in iframe, good to list)
+    'submit_rating' => 'content/submit_rating.php', 
 ];
 ?>
 
@@ -357,8 +348,19 @@ $allowed_pages = [
 
         <main class="flex-grow p-0 m-0">
             <?php
+            // Check if the action is allowed, otherwise default to dashboard
             $page_to_load = $allowed_pages[$action] ?? $allowed_pages['dashboard'];
-            echo '<iframe src="' . htmlspecialchars($page_to_load) . '" frameborder="0" style="width:100%; height:100%; border:none;"></iframe>';
+            
+            // Ensure the file exists before trying to load it in the iframe
+            // We strip query strings for the file check
+            $file_path_check = explode('?', $page_to_load)[0];
+            
+            if (isset($allowed_pages[$action]) && file_exists($file_path_check)) {
+                echo '<iframe src="' . htmlspecialchars($page_to_load) . '" frameborder="0" style="width:100%; height:100%; border:none;"></iframe>';
+            } else {
+                // Page not found or not allowed, load dashboard content
+                echo '<iframe src="' . htmlspecialchars($allowed_pages['dashboard']) . '" frameborder="0" style="width:100%; height:100%; border:none;"></iframe>';
+            }
             ?>
         </main>
         
