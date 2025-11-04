@@ -4,6 +4,7 @@ session_start();
 // Basic user info
 $userName = htmlspecialchars($_SESSION['first_name'] ?? 'User');
 $userRole = $_SESSION['user_rules'] ?? null;
+$userID = $_SESSION['user_id'] ?? 0; // Get user ID for queries
 
 // Require database connection
 require_once '../db.php';
@@ -19,24 +20,54 @@ function getWelcomeMessage($role) {
 }
 
 // Function to get stats based on role
-function getStats($role) {
-    // These are placeholder values.
+function getStats($role, $conn, $userID) {
     switch ($role) {
         case '0': // Client
+            // Helper function for prepared statements
+            $fetchCount = function($conn, $sql, $params = [], $types = "") {
+                $stmt = $conn->prepare($sql);
+                if (!$stmt) { return 0; } // Handle error
+                if ($params && $types) {
+                    $stmt->bind_param($types, ...$params);
+                }
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                $stmt->close();
+                return $row['count'] ?? 0;
+            };
+
+            // Active Bookings: 'pending', 'approved', 'rescheduled'
+            $activeBookingsSql = "SELECT COUNT(*) as count FROM bookings WHERE customer_id = ? AND booking_status IN ('pending', 'approved', 'rescheduled')";
+            $activeBookings = $fetchCount($conn, $activeBookingsSql, [$userID], "i");
+
+            // Completed Services
+            $completedSql = "SELECT COUNT(*) as count FROM bookings WHERE customer_id = ? AND booking_status = 'completed'";
+            $completedServices = $fetchCount($conn, $completedSql, [$userID], "i");
+
+            // Services Available: Count of approved and available providers
+            $servicesSql = "SELECT COUNT(*) as count FROM service_providers WHERE is_approved = 1 AND is_available = 1";
+            $servicesAvailable = $fetchCount($conn, $servicesSql);
+
+            // Reviews Submitted
+            $reviewsSql = "SELECT COUNT(*) as count FROM provider_ratings WHERE customer_id = ?";
+            $reviewsSubmitted = $fetchCount($conn, $reviewsSql, [$userID], "i");
+
             return [
-                ['icon' => 'fa-calendar-check', 'value' => '2', 'label' => 'Active Bookings', 'color' => 'blue'],
-                ['icon' => 'fa-history', 'value' => '8', 'label' => 'Completed Services', 'color' => 'green'],
-                ['icon' => 'fa-search', 'value' => '15+', 'label' => 'Services Available', 'color' => 'yellow'],
-                ['icon' => 'fa-comments', 'value' => '4', 'label' => 'Reviews Submitted', 'color' => 'purple']
+                ['icon' => 'fa-calendar-check', 'value' => $activeBookings, 'label' => 'Active Bookings', 'color' => 'blue'],
+                ['icon' => 'fa-history', 'value' => $completedServices, 'label' => 'Completed Services', 'color' => 'green'],
+                ['icon' => 'fa-search', 'value' => $servicesAvailable . '+', 'label' => 'Services Available', 'color' => 'yellow'],
+                ['icon' => 'fa-comments', 'value' => $reviewsSubmitted, 'label' => 'Reviews Submitted', 'color' => 'purple']
             ];
-        case '1': // Provider
+            
+        case '1': // Provider (Placeholders)
             return [
                 ['icon' => 'fa-briefcase', 'value' => '5', 'label' => 'Active Listings', 'color' => 'blue'],
                 ['icon' => 'fa-calendar-check', 'value' => '3', 'label' => 'Pending Bookings', 'color' => 'yellow'],
                 ['icon' => 'fa-star', 'value' => '4.8/5', 'label' => 'Average Rating', 'color' => 'green'],
                 ['icon' => 'fa-wallet', 'value' => '₱7,500', 'label' => 'Earnings (Month)', 'color' => 'purple']
             ];
-        case '2': // Admin
+        case '2': // Admin (Placeholders)
             return [
                 ['icon' => 'fa-users', 'value' => '152', 'label' => 'Total Users', 'color' => 'blue'],
                 ['icon' => 'fa-tools', 'value' => '45', 'label' => 'Listed Services', 'color' => 'yellow'],
@@ -72,7 +103,7 @@ function getQuickActions($role) {
     }
 }
 
-$stats = getStats($userRole);
+$stats = getStats($userRole, $conn, $userID); // Pass $conn and $userID
 $quickActions = getQuickActions($userRole);
 
 // Fetch all services from the database
