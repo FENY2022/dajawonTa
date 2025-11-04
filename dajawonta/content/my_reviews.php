@@ -31,7 +31,7 @@ $sql = "SELECT
             provider_ratings pr ON b.id = pr.booking_id
         WHERE 
             b.customer_id = ? 
-            AND b.booking_status = 'approved'
+            AND b.booking_status = 'completed'
             AND b.booking_date_to < ?
         ORDER BY 
             b.booking_date_to DESC";
