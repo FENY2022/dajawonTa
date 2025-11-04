@@ -93,6 +93,69 @@ $conn->close();
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
         
         footer { text-align: center; padding: 1.5rem; background: var(--light); color: var(--gray); border-top: 1px solid var(--light-gray); }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(-30px);
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        .modal-content p {
+            font-size: 1.05rem;
+            margin-bottom: 2rem;
+            color: var(--dark);
+            line-height: 1.7;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .modal-buttons .btn {
+            width: 100%;
+            flex: 1;
+        }
+        /* New style for the 'Cancel' button */
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--dark);
+            border: 1px solid #ccc;
+        }
+        .btn-secondary:hover {
+            background: #d4d4d4;
+        }
     </style>
 </head>
 <body>
@@ -117,7 +180,8 @@ $conn->close();
 
         <div class="booking-form">
             <h2>Enter Your Booking Details</h2>
-            <form action="process_booking.php" method="POST">
+            
+            <form action="process_booking.php" method="POST" id="bookingForm">
                 <input type="hidden" name="provider_id" value="<?php echo htmlspecialchars($provider['id']); ?>">
                 
 
@@ -185,6 +249,16 @@ $conn->close();
     </footer>
 </div>
 
+<div id="bookingConfirmationModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3><i class="fas fa-exclamation-triangle" style="color: #f0ad4e;"></i> Please Confirm</h3>
+        <p>Note: Please be reminded that once the payment has been made, your booking is considered final. Cancellations will no longer be accepted, and payments are non-refundable.</p>
+        <div class="modal-buttons">
+            <button type="button" id="cancelBookingBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
+            <button type="button" id="confirmBookingBtn" class="btn btn-primary"><i class="fas fa-check-circle"></i> Submit Booking Request</button>
+        </div>
+    </div>
+</div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const fromDate = document.getElementById("booking_date_from");
@@ -225,6 +299,39 @@ document.addEventListener("DOMContentLoaded", function() {
             toTime.value = "";
         }
     });
+
+    // --- NEW: MODAL CONFIRMATION LOGIC ---
+    const bookingForm = document.getElementById("bookingForm");
+    const modal = document.getElementById("bookingConfirmationModal");
+    const cancelBtn = document.getElementById("cancelBookingBtn");
+    const confirmBtn = document.getElementById("confirmBookingBtn");
+
+    if (bookingForm && modal && cancelBtn && confirmBtn) {
+        
+        // 1. When the form is submitted, show the modal instead
+        bookingForm.addEventListener("submit", function(event) {
+            // Stop the form from submitting
+            event.preventDefault();
+            
+            // Show the modal
+            modal.classList.add("show");
+        });
+
+        // 2. When user clicks "Cancel"
+        cancelBtn.addEventListener("click", function() {
+            // Hide the modal
+            modal.classList.remove("show");
+        });
+
+        // 3. When user clicks "Submit Booking Request"
+        confirmBtn.addEventListener("click", function() {
+            // Manually submit the form
+            // This will bypass the event listener and submit for real
+            bookingForm.submit();
+        });
+    }
+    // --- END OF NEW LOGIC ---
+
 });
 </script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
