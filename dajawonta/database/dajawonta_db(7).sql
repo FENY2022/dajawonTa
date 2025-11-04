@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 04, 2025 at 01:28 AM
+-- Generation Time: Nov 04, 2025 at 01:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -64,7 +64,38 @@ INSERT INTO `bookings` (`id`, `provider_id`, `service_id`, `customer_id`, `role`
 (35, 39, 0, 9, 1, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-27', '2025-10-31', '08:00:00', '17:00:00', 1800.00, 'cs_a9cwu8nwtqs7BpgLKMczxpnB', 'https://checkout.paymongo.com/cs_a9cwu8nwtqs7BpgLKMczxpnB_client_o1b7Bq9Zuc9ua8CwjhjoNC1u#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'paid', NULL, 'pi_H9pVhgNvySQySkqLFxdJ3A7x', '2025-10-27 02:58:02'),
 (36, 39, 0, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-27', '2025-10-31', '08:00:00', '17:00:00', 1800.00, 'cs_rWU7uJLBctjqPgnJ7sFsqhjf', 'https://checkout.paymongo.com/cs_rWU7uJLBctjqPgnJ7sFsqhjf_client_B35CDC8nDfvHJGS79AvNGYCm#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'unpaid', NULL, NULL, '2025-10-27 05:36:32'),
 (37, 39, 0, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-27', '2025-10-31', '08:00:00', '17:00:00', 1800.00, 'cs_EP4QuWZCfgPK85cVHJs3ijME', 'https://checkout.paymongo.com/cs_EP4QuWZCfgPK85cVHJs3ijME_client_bAW7H59P3bWgeRivZwrt3MkL#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, '', 0.00, 'paid', NULL, 'pi_dnjiV92iLs4o1tAS3bdGNQJz', '2025-10-27 05:45:04'),
-(38, 36, 3, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-09', '2025-10-09', '16:00:00', '16:00:00', 500.00, 'cs_9L1dFJ8NEqC5hebBi9Z6ddyc', 'https://checkout.paymongo.com/cs_9L1dFJ8NEqC5hebBi9Z6ddyc_client_fPW75gywtw2pqmnpjcttbV6i#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, 'fsdfsdf', 0.00, 'unpaid', NULL, NULL, '2025-11-02 12:16:28');
+(38, 36, 3, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-09', '2025-10-09', '16:00:00', '16:00:00', 500.00, 'cs_9L1dFJ8NEqC5hebBi9Z6ddyc', 'https://checkout.paymongo.com/cs_9L1dFJ8NEqC5hebBi9Z6ddyc_client_fPW75gywtw2pqmnpjcttbV6i#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'approved', 1, 'fsdfsdf', 0.00, 'unpaid', NULL, NULL, '2025-11-02 12:16:28'),
+(39, 36, 3, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-09', '16:00:00', '16:00:00', 500.00, 'cs_wyxirYAVKJ4ahPRUA89ic16H', 'https://checkout.paymongo.com/cs_wyxirYAVKJ4ahPRUA89ic16H_client_bD5ahFDYTH57uC5KEdTmG6Tu#cGtfdGVzdF9CSFFkY1ZrdTFINmt3N2FkeG5OUWE3RnI=', '00:00:00', 'rescheduled', 1, 'gdfgdfgf', 0.00, 'paid', NULL, 'pi_s13FLYHjc8fNLG868VNLLHVU', '2025-11-04 10:46:19'),
+(40, 36, 3, 12, 0, 'ANTHONIE FENY CATALAN', 'venzonanthonie@gmail.com', '09478984921', '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 500.00, NULL, NULL, '00:00:00', 'pending', 0, 'sdfsdfsdf', 0.00, 'unpaid', NULL, NULL, '2025-11-04 11:14:56');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `booking_reschedules`
+--
+
+CREATE TABLE `booking_reschedules` (
+  `id` int(11) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `rescheduled_by_user_id` int(11) NOT NULL COMMENT 'User ID of the person (provider/admin) who made the change',
+  `reason` text NOT NULL,
+  `old_booking_date_from` date NOT NULL,
+  `old_booking_date_to` date NOT NULL,
+  `old_booking_time_from` time NOT NULL,
+  `old_booking_time_to` time NOT NULL,
+  `new_booking_date_from` date NOT NULL,
+  `new_booking_date_to` date NOT NULL,
+  `new_booking_time_from` time NOT NULL,
+  `new_booking_time_to` time NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `booking_reschedules`
+--
+
+INSERT INTO `booking_reschedules` (`id`, `booking_id`, `rescheduled_by_user_id`, `reason`, `old_booking_date_from`, `old_booking_date_to`, `old_booking_time_from`, `old_booking_time_to`, `new_booking_date_from`, `new_booking_date_to`, `new_booking_time_from`, `new_booking_time_to`, `created_at`) VALUES
+(1, 39, 9, 'NO available', '2025-10-06', '2025-10-09', '16:00:00', '16:00:00', '2025-10-06', '2025-10-09', '16:00:00', '16:00:00', '2025-11-04 11:51:00');
 
 -- --------------------------------------------------------
 
@@ -131,7 +162,42 @@ INSERT INTO `notifications` (`notification_id`, `user_id`, `message`, `link`, `i
 (161, 12, 'Your booking (#37) with CANTILAN CARPENTERO has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=37', 0, '2025-11-01 13:42:59', 0),
 (162, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=38', 0, '2025-11-02 12:16:28', 1),
 (163, 12, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=38', 0, '2025-11-02 12:16:28', 2),
-(164, 12, 'Your booking (#38) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=38', 0, '2025-11-02 12:16:49', 0);
+(164, 12, 'Your booking (#38) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=38', 0, '2025-11-02 12:16:49', 0),
+(165, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=39', 0, '2025-11-04 10:46:19', 1),
+(166, 12, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=39', 0, '2025-11-04 10:46:19', 2),
+(167, 12, 'We\'re sorry, your booking (#39) with LNM CARPENTRY has been declined.', 'customer_booking_details.php?booking_id=39', 0, '2025-11-04 10:47:15', 0),
+(168, 12, 'Your booking (#39) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=39', 0, '2025-11-04 10:47:23', 0),
+(169, 12, 'We\'re sorry, your booking (#39) with LNM CARPENTRY has been declined.', 'customer_booking_details.php?booking_id=39', 0, '2025-11-04 10:47:27', 0),
+(170, 12, 'Your booking (#39) with LNM CARPENTRY has been approved! Please proceed with payment.', 'dashboard.php?action=customer_booking_details&booking_id=39', 0, '2025-11-04 10:47:30', 0),
+(171, 3, 'New provider \'CARAGA CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=171', 0, '2025-11-04 10:50:25', 2),
+(172, 10, 'New provider \'CARAGA CARPENTRY\' has registered.', 'dashboard.php?action=confirmService_providers&notification_id=172', 0, '2025-11-04 10:50:25', 2),
+(173, 9, 'You have a new booking request from ANTHONIE FENY CATALAN.', 'dashboard.php?action=provider_booking_details&booking_id=40', 0, '2025-11-04 11:14:56', 1),
+(174, 12, 'Your booking request for Carpentry has been received.', 'dashboard.php?action=my_bookings&booking_id=40', 0, '2025-11-04 11:14:56', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `provider_ratings`
+--
+
+CREATE TABLE `provider_ratings` (
+  `id` int(11) NOT NULL,
+  `booking_id` int(11) NOT NULL,
+  `provider_id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `rating` int(1) NOT NULL COMMENT 'Rating from 1 to 5',
+  `comment` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `provider_ratings`
+--
+
+INSERT INTO `provider_ratings` (`id`, `booking_id`, `provider_id`, `customer_id`, `rating`, `comment`, `created_at`) VALUES
+(1, 37, 39, 12, 4, 'dfdf', '2025-11-04 12:03:01'),
+(2, 36, 39, 12, 3, 'sdsdsd', '2025-11-04 12:03:08'),
+(3, 38, 36, 12, 4, '', '2025-11-04 12:06:28');
 
 -- --------------------------------------------------------
 
@@ -195,7 +261,8 @@ INSERT INTO `service_providers` (`id`, `user_id`, `company_name`, `company_addre
 (36, 9, 'LNM CARPENTRY', 'PUROK 1, La Union, Cabadbaran City, Agusan del Norte', 'venzonanthonie@gmail.com', '+639518793041', 'Carpentry', NULL, '2025-10-06 08:00:57', 3, 'Furniture repair, door/window fixes', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 1),
 (37, 9, 'LNM CARPENTRY', 'PUROK 1NATIONAL HIGHWAY', 'venzonanthonie@gmail.com', '+639329342620', 'Carpentry', '', '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-08', '16:51:00', '16:51:00', 1),
 (38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', '', '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-31', '12:01:00', '13:12:00', 1),
-(39, 9, 'CANTILAN CARPENTERO', 'CANTILAN SURIGAO DEL SUR', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', '', '2025-10-26 01:29:18', 3, 'Furniture repair, door/window fixes', 1800.00, NULL, '2025-01-01', '00:00:00', 1, '0000-00-00', '2025-11-29', '07:00:00', '17:00:00', 1);
+(39, 9, 'CANTILAN CARPENTERO', 'CANTILAN SURIGAO DEL SUR', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', '', '2025-10-26 01:29:18', 3, 'Furniture repair, door/window fixes', 1800.00, NULL, '2025-01-01', '00:00:00', 1, '0000-00-00', '2025-11-29', '07:00:00', '17:00:00', 1),
+(40, 9, 'CARAGA CARPENTRY', 'rtgdfgdfg', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', NULL, '2025-11-04 10:50:25', 3, 'Furniture repair, door/window fixes', 600.00, '[\"6909da712be21_error.jpg\",\"6909da712bf97_on.jpg\"]', '2025-01-01', '00:00:00', 0, '2025-11-04', '2025-11-28', '08:00:00', '17:00:00', 1);
 
 -- --------------------------------------------------------
 
@@ -254,10 +321,27 @@ ALTER TABLE `bookings`
   ADD KEY `provider_id` (`provider_id`);
 
 --
+-- Indexes for table `booking_reschedules`
+--
+ALTER TABLE `booking_reschedules`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `rescheduled_by_user_id` (`rescheduled_by_user_id`);
+
+--
 -- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`notification_id`);
+
+--
+-- Indexes for table `provider_ratings`
+--
+ALTER TABLE `provider_ratings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `booking_id` (`booking_id`) COMMENT 'A booking can only be rated once',
+  ADD KEY `provider_id` (`provider_id`),
+  ADD KEY `customer_id` (`customer_id`);
 
 --
 -- Indexes for table `services`
@@ -286,13 +370,25 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+
+--
+-- AUTO_INCREMENT for table `booking_reschedules`
+--
+ALTER TABLE `booking_reschedules`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=175;
+
+--
+-- AUTO_INCREMENT for table `provider_ratings`
+--
+ALTER TABLE `provider_ratings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `services`
@@ -304,7 +400,7 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT for table `service_providers`
 --
 ALTER TABLE `service_providers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -321,6 +417,19 @@ ALTER TABLE `users`
 --
 ALTER TABLE `bookings`
   ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`provider_id`) REFERENCES `service_providers` (`id`);
+
+--
+-- Constraints for table `booking_reschedules`
+--
+ALTER TABLE `booking_reschedules`
+  ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `provider_ratings`
+--
+ALTER TABLE `provider_ratings`
+  ADD CONSTRAINT `fk_rating_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_rating_provider` FOREIGN KEY (`provider_id`) REFERENCES `service_providers` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
