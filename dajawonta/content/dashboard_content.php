@@ -52,15 +52,15 @@ function getQuickActions($role) {
     switch ($role) {
         case '0': // Client
             return [
-                ['icon' => 'fa-search', 'label' => 'Find a Service', 'link' => 'dashboard.php?action=browse_services'],
-                ['icon' => 'fa-calendar-alt', 'label' => 'View My Bookings', 'link' => 'dashboard.php?action=my_bookings'],
-                ['icon' => 'fa-user-circle', 'label' => 'Manage Profile', 'link' => 'dashboard.php?action=profile']
+                ['icon' => 'fa-search', 'label' => 'Find a Service', 'link' => 'browse_services.php'],
+                ['icon' => 'fa-calendar-alt', 'label' => 'View My Bookings', 'link' => 'my_bookings.php'],
+                ['icon' => 'fa-user-circle', 'label' => 'Manage Profile', 'link' => 'profile.php']
             ];
         case '1': // Provider
             return [
                 ['icon' => 'fa-plus', 'label' => 'Add New Service', 'link' => 'addNewservice.php', 'modal' => true],
-                ['icon' => 'fa-tasks', 'label' => 'View Bookings', 'link' => 'dashboard.php?action=manage_bookings'],
-                ['icon' => 'fa-user-edit', 'label' => 'Update Profile', 'link' => 'dashboard.php?action=profile']
+                ['icon' => 'fa-tasks', 'label' => 'View Bookings', 'link' => 'view_booking_history.php'],
+                ['icon' => 'fa-user-edit', 'label' => 'Update Profile', 'link' => 'profile.php']
             ];
         case '2': // Admin
             return [
