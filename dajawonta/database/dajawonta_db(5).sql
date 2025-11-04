@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 02, 2025 at 01:39 PM
+-- Generation Time: Nov 04, 2025 at 01:28 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -176,6 +176,7 @@ CREATE TABLE `service_providers` (
   `service_id` int(11) DEFAULT NULL,
   `service_description` text DEFAULT NULL,
   `price` decimal(10,2) NOT NULL,
+  `legal_documents` text DEFAULT NULL,
   `available_date` date NOT NULL DEFAULT '2025-01-01',
   `available_time` time NOT NULL DEFAULT '00:00:00',
   `is_approved` int(11) NOT NULL,
@@ -190,11 +191,11 @@ CREATE TABLE `service_providers` (
 -- Dumping data for table `service_providers`
 --
 
-INSERT INTO `service_providers` (`id`, `user_id`, `company_name`, `company_address`, `company_email`, `contact_number`, `service_name`, `description`, `registration_date`, `service_id`, `service_description`, `price`, `available_date`, `available_time`, `is_approved`, `available_date_from`, `available_date_to`, `available_time_from`, `available_time_to`, `is_available`) VALUES
-(36, 9, 'LNM CARPENTRY', 'PUROK 1, La Union, Cabadbaran City, Agusan del Norte', 'venzonanthonie@gmail.com', '+639518793041', 'Carpentry', NULL, '2025-10-06 08:00:57', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 1),
-(37, 9, 'LNM CARPENTRY', 'PUROK 1NATIONAL HIGHWAY', 'venzonanthonie@gmail.com', '+639329342620', 'Carpentry', '', '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-08', '16:51:00', '16:51:00', 1),
-(38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', '', '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-31', '12:01:00', '13:12:00', 1),
-(39, 9, 'CANTILAN CARPENTERO', 'CANTILAN SURIGAO DEL SUR', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', '', '2025-10-26 01:29:18', 3, 'Furniture repair, door/window fixes', 1800.00, '2025-01-01', '00:00:00', 1, '0000-00-00', '2025-11-29', '07:00:00', '17:00:00', 1);
+INSERT INTO `service_providers` (`id`, `user_id`, `company_name`, `company_address`, `company_email`, `contact_number`, `service_name`, `description`, `registration_date`, `service_id`, `service_description`, `price`, `legal_documents`, `available_date`, `available_time`, `is_approved`, `available_date_from`, `available_date_to`, `available_time_from`, `available_time_to`, `is_available`) VALUES
+(36, 9, 'LNM CARPENTRY', 'PUROK 1, La Union, Cabadbaran City, Agusan del Norte', 'venzonanthonie@gmail.com', '+639518793041', 'Carpentry', NULL, '2025-10-06 08:00:57', 3, 'Furniture repair, door/window fixes', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-11', '16:00:00', '16:00:00', 1),
+(37, 9, 'LNM CARPENTRY', 'PUROK 1NATIONAL HIGHWAY', 'venzonanthonie@gmail.com', '+639329342620', 'Carpentry', '', '2025-10-08 08:52:02', 3, 'Furniture repair, door/window fixes', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-06', '2025-10-08', '16:51:00', '16:51:00', 1),
+(38, 9, 'CARAGA CARPENTRY', 'BUTUAN CITY', 'venzonanthonie@gmail.com', '09478984921', 'Masonry & Welding', '', '2025-10-24 04:43:11', 5, 'Construction, welding jobs', 500.00, NULL, '2025-01-01', '00:00:00', 1, '2025-10-08', '2025-10-31', '12:01:00', '13:12:00', 1),
+(39, 9, 'CANTILAN CARPENTERO', 'CANTILAN SURIGAO DEL SUR', 'venzonanthonie@gmail.com', '09478984921', 'Carpentry', '', '2025-10-26 01:29:18', 3, 'Furniture repair, door/window fixes', 1800.00, NULL, '2025-01-01', '00:00:00', 1, '0000-00-00', '2025-11-29', '07:00:00', '17:00:00', 1);
 
 -- --------------------------------------------------------
 
