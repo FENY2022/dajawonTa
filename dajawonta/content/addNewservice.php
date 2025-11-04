@@ -1,3 +1,28 @@
+<?php
+    // START: This block was moved from the <body>
+    session_start();
+    require '../db.php'; // Ensure this path is correct
+
+    $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : '';
+
+    if (empty($user_id)) {
+        // Redirect to login if not logged in
+        // header('Location: /login.php');
+        // exit();
+    }
+
+    // Fetch service options from the database
+    $service_options = "";
+    $sql_services = "SELECT service_id, service_name FROM services ORDER BY service_name ASC";
+    $result_services = $conn->query($sql_services);
+    if ($result_services && $result_services->num_rows > 0) {
+        while ($row = $result_services->fetch_assoc()) {
+            $service_options .= "<option value='" . htmlspecialchars($row['service_id']) . "'>" 
+                              . htmlspecialchars($row['service_name']) . "</option>";
+        }
+    }
+    // END: This block was moved from the <body>
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,13 +31,10 @@
     <title>Service Provider Registration</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     
     <style>
@@ -154,6 +176,31 @@
         .input-group .form-input[type="date"], .input-group .form-input[type="time"] {
             padding-right: 1rem; /* Adjust padding for date/time inputs */
         }
+        /* File input custom styles */
+        .input-group input[type="file"].form-input {
+            padding: 0;
+            line-height: 1.5;
+        }
+        .input-group input[type="file"]::file-selector-button {
+            background-color: var(--light-gray);
+            border: none;
+            border-right: 2px solid var(--border-color);
+            padding: 0.875rem 1rem;
+            margin-right: 1rem;
+            font-weight: 500;
+            color: var(--dark-gray);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .input-group input[type="file"]::file-selector-button:hover {
+            background-color: #e5e7eb;
+        }
+        .input-group .form-input:focus, .input-group .form-select:focus, .input-group .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            background-color: #fff;
+        }
         .input-group .form-label {
             font-size: 0.875rem;
             font-weight: 500;
@@ -174,15 +221,14 @@
             transition: color 0.3s ease;
             pointer-events: none; /* Allow clicks to pass through */
         }
+        /* Adjust icon for file input */
+        .input-group input[type="file"] ~ .icon {
+            top: 1.15rem;
+            transform: none;
+        }
         .input-group .form-textarea ~ .icon {
             top: 1.15rem; /* Adjust icon for textarea */
             transform: none;
-        }
-        .input-group .form-input:focus, .input-group .form-select:focus, .input-group .form-textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-            background-color: #fff;
         }
         .input-group .form-input:focus ~ .icon, .input-group .form-select:focus ~ .icon, .input-group .form-textarea:focus ~ .icon {
             color: var(--primary-color);
@@ -194,6 +240,30 @@
               transform: translateY(-50%);
               color: var(--medium-gray);
               pointer-events: none;
+        }
+        
+        /* --- 📁 File Preview Styling --- */
+        #file-preview-list {
+            margin-top: 1.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            background-color: #f9fafb;
+        }
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .file-preview-item:last-child {
+            margin-bottom: 0;
         }
 
         /* --- 🚀 Button Styling --- */
@@ -228,32 +298,6 @@
     </style>
 </head>
 <body>
-    <?php
-        // Start the session to get user details
-        require '../db.php'; // Ensure this path is correct
-
-        // Check if user_id is set in the session.
-        $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : '';
-
-        // If no user is logged in, you should redirect them.
-        if (empty($user_id)) {
-            // In a real app, this is crucial. For this example, we'll proceed.
-            // header('Location: /login.php');
-            // exit();
-        }
-
-        // Fetch service options from the database
-        $service_options = "";
-        $sql_services = "SELECT service_id, service_name FROM services ORDER BY service_name ASC";
-        $result_services = $conn->query($sql_services);
-        if ($result_services && $result_services->num_rows > 0) {
-            while ($row = $result_services->fetch_assoc()) {
-                $service_options .= "<option value='" . htmlspecialchars($row['service_id']) . "'>" 
-                                  . htmlspecialchars($row['service_name']) . "</option>";
-            }
-        }
-    ?>
-
     <div class="card w-full max-w-3xl p-8 md:p-12">
         <div class="text-center mb-10">
             <h1 class="text-3xl md:text-4xl font-bold form-header mb-2">Become a Service Provider</h1>
@@ -264,10 +308,11 @@
             <div class="progress-line"></div>
             <div class="progress-step active" data-title="Company Info"><span>1</span></div>
             <div class="progress-step" data-title="Service Details"><span>2</span></div>
+            <div class="progress-step" data-title="Documents"><span>3</span></div>
             <div class="progress-step" data-title="Confirmation"><span><i class="fas fa-check"></i></span></div>
         </div>
 
-        <form id="service-provider-form" action="SubmitaddNewservice.php" method="POST" novalidate>
+        <form id="service-provider-form" action="SubmitaddNewservice.php" method="POST" novalidate enctype="multipart/form-data">
             <input type="hidden" name="service_userID" value="<?php echo htmlspecialchars($user_id); ?>">
             <input type="hidden" id="service_name" name="service_name">
 
@@ -314,7 +359,6 @@
                         <textarea id="description" name="description" class="form-textarea bg-gray-50" placeholder="Service description will appear here..." rows="4" required></textarea>
                         <i class="fas fa-file-alt icon"></i>
                     </div>
-                    
                     <div>
                         <label class="form-label">Available Date Range</label>
                         <div class="flex items-center space-x-4">
@@ -329,7 +373,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div>
                         <label class="form-label">Available Time Range</label>
                         <div class="flex items-center space-x-4">
@@ -344,19 +387,35 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="input-group">
                         <label for="price" class="form-label">Service Price / Rate (PHP)</label>
                         <input type="number" id="price" name="price" class="form-input" placeholder="Enter Amount" required min="0" step="0.01">
                         <i class="icon font-bold" style="font-style: normal;">₱</i>
                     </div>
-
                 </div>
             </div>
             
             <div class="form-step">
-                <div class="text-center">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800">Legal Documents</h2>
+                    <p class="text-gray-500">Upload any supporting documents (e.g., DTI, permits). Up to 10 files. (Optional)</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="input-group">
+                        <label for="legal_documents" class="form-label">Upload Documents</label>
+                        <input type="file" id="legal_documents" name="legal_documents[]" class="form-input" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <i class="fas fa-file-upload icon"></i>
+                    </div>
                     
+                    <div id="file-preview-list" class="hidden">
+                        <span class="text-sm font-medium text-gray-700">Selected files (max 10):</span>
+                        <div id="file-list-items" class="mt-2 space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-step">
+                <div class="text-center">
                     <h2 class="text-2xl font-semibold text-gray-800 mt-6 mb-2">Ready to Launch?</h2>
                     <p class="text-gray-500 max-w-md mx-auto">You're all set! Please review your information, then click the submit button to complete your registration.</p>
                 </div>
@@ -390,6 +449,9 @@
         const formSteps = [...document.querySelectorAll('.form-step')];
         const progressSteps = [...document.querySelectorAll('.progress-step')];
         const progressLine = document.querySelector('.progress-line');
+        const fileInput = document.getElementById('legal_documents');
+        const filePreviewList = document.getElementById('file-preview-list');
+        const fileListItems = document.getElementById('file-list-items');
 
         let currentStep = 0;
 
@@ -447,7 +509,6 @@
 
         function validateCurrentStep() {
             const activeStep = formSteps[currentStep];
-            // Select all required inputs, textareas, and selects that are visible
             const requiredFields = activeStep.querySelectorAll('input:required, textarea:required, select:required');
             let isValid = true;
 
@@ -461,7 +522,20 @@
                 }
             });
 
-            if (!isValid) {
+            // --- NEW: Validate file step ---
+            if (currentStep === 2) { // Step 2 is the document upload step (0, 1, 2)
+                const files = fileInput.files;
+                if (files.length > 10) {
+                    showToast('You can upload a maximum of 10 files.', 'error');
+                    fileInput.style.borderColor = 'var(--error-color)';
+                    isValid = false;
+                } else {
+                    fileInput.style.borderColor = 'var(--border-color)';
+                }
+            }
+            // --- End new validation ---
+
+            if (!isValid && currentStep !== 2) { // Don't show for file count
                 showToast('Please fill out all required fields.', 'error');
             }
             return isValid;
@@ -506,8 +580,6 @@
                         return response.text();
                     })
                     .then(data => {
-                        // If the server returns a "not found" message, clear the textarea
-                        // to ensure our 'required' validation works correctly.
                         if (data.includes("not found") || data.includes("No description")) {
                             descriptionTextarea.value = "";
                         } else {
@@ -532,6 +604,36 @@
             const errorMessage = urlParams.get('message') || 'An unknown error occurred.';
             showToast(decodeURIComponent(errorMessage), 'error');
         }
+
+        // --- NEW: Event Listener for File Input ---
+        fileInput.addEventListener('change', () => {
+            const files = fileInput.files;
+            if (files.length > 0) {
+                filePreviewList.classList.remove('hidden');
+                fileListItems.innerHTML = ''; // Clear previous list
+
+                if (files.length > 10) {
+                    showToast('Maximum 10 files allowed. Only the first 10 will be shown.', 'error');
+                }
+
+                // Show up to 10 files
+                for (let i = 0; i < Math.min(files.length, 10); i++) {
+                    const file = files[i];
+                    const item = document.createElement('div');
+                    item.className = 'file-preview-item';
+                    item.innerHTML = `
+                        <span class="flex items-center gap-2">
+                            <i class="fas fa-file-alt text-gray-500"></i>
+                            <span class="text-sm text-gray-800">${file.name}</span>
+                        </span>
+                        <span class="text-xs text-gray-500">${(file.size / 1024).toFixed(1)} KB</span>
+                    `;
+                    fileListItems.appendChild(item);
+                }
+            } else {
+                filePreviewList.classList.add('hidden');
+            }
+        });
 
         // Initial UI setup
         updateFormUI();
