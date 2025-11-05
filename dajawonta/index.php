@@ -246,7 +246,7 @@
                     <div class="hidden lg:block animate-slide-up delay-100">
                         <div class="relative">
                             <div class="absolute -inset-4 bg-white opacity-20 rounded-2xl transform rotate-3"></div>
-                            <img src="https://images.unsplash.com/photo-1599643477891-552436dfac3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80" class="relative w-full h-auto rounded-2xl shadow-2xl" alt="Filipino Service Provider">
+                            <img src="image/1762334034.png" class="relative w-full h-auto rounded-2xl shadow-2xl" alt="Filipino Service Provider">
                         </div>
                     </div>
                 </div>
