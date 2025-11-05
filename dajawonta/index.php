@@ -376,7 +376,7 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col service-card animate-fade-in delay-300">
                         <div class="h-48 overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1595033994301-33778558273a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Carpenter Service">
+                            <img src="image/1762350875.png" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Carpenter Service">
                         </div>
                         <div class="p-6 flex-grow flex flex-col">
                             <h4 class="text-xl font-semibold mb-2">Carpenter</h4>
@@ -386,7 +386,7 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col service-card animate-fade-in delay-100">
                         <div class="h-48 overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1581193635722-1350a41c1a40?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Mason Service">
+                            <img src="image/1762351242.png" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Mason Service">
                         </div>
                         <div class="p-6 flex-grow flex flex-col">
                             <h4 class="text-xl font-semibold mb-2">Mason</h4>
@@ -396,7 +396,7 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col service-card animate-fade-in delay-200">
                         <div class="h-48 overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1629895359203-12503ff2bddb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Welder Service">
+                            <img src="image/1762351383.png" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Welder Service">
                         </div>
                         <div class="p-6 flex-grow flex flex-col">
                             <h4 class="text-xl font-semibold mb-2">Welder</h4>
@@ -406,7 +406,7 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col service-card animate-fade-in delay-300">
                         <div class="h-48 overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1598435889981-12f5516c5598?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Tech Repair Service">
+                            <img src="image/1762351562.png" class="w-full h-full object-cover transition-transform duration-500 hover:scale-110" alt="Tech Repair Service">
                         </div>
                         <div class="p-6 flex-grow flex flex-col">
                             <h4 class="text-xl font-semibold mb-2">Computer/Phone Repair</h4>
