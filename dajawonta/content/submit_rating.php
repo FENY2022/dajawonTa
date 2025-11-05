@@ -27,12 +27,14 @@ if ($customer_id !== $_SESSION['user_id']) {
     exit;
 }
 
-// Security check: Verify this user actually made this booking and it's completed
+// --- CHANGED HERE ---
+// Security check: Verify this user actually made this booking AND it is 'completed'.
+// Changed 'booking_status = 'approved'' to 'booking_status = 'completed''
+// Removed 'AND booking_date_to < CURDATE()'
 $verify_sql = "SELECT id FROM bookings 
                WHERE id = ? 
                AND customer_id = ? 
-               AND booking_status = 'approved' 
-               AND booking_date_to < CURDATE()";
+               AND booking_status = 'completed'"; 
 $stmt = $conn->prepare($verify_sql);
 $stmt->bind_param("ii", $booking_id, $customer_id);
 $stmt->execute();

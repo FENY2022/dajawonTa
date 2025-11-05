@@ -10,11 +10,14 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || $_SESSION
 }
 
 $customer_id = $_SESSION['user_id'];
-$today = date("Y-m-d");
+// $today = date("Y-m-d"); // This is no longer needed
 
 // Query to get completed bookings for this customer
 // We JOIN with service_providers to get the company name
 // We LEFT JOIN with provider_ratings to check if this booking_id has already been rated
+// --- CHANGED HERE ---
+// Removed the 'AND b.booking_date_to < ?' check.
+// We only care if the status is 'completed'.
 $sql = "SELECT 
             b.id AS booking_id, 
             b.booking_date_to, 
@@ -32,7 +35,6 @@ $sql = "SELECT
         WHERE 
             b.customer_id = ? 
             AND b.booking_status = 'completed'
-            AND b.booking_date_to < ?
         ORDER BY 
             b.booking_date_to DESC";
 
@@ -41,7 +43,9 @@ if ($stmt === false) {
     die("Prepare failed: " . $conn->error);
 }
 
-$stmt->bind_param("is", $customer_id, $today);
+// --- CHANGED HERE ---
+// Updated bind_param to only include customer_id ("i" for integer)
+$stmt->bind_param("i", $customer_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $bookings = $result->fetch_all(MYSQLI_ASSOC);
@@ -139,7 +143,6 @@ $stmt->close();
                             </div>
                             <div class="mt-4 md:mt-0 md:ml-6">
                                 <?php if ($booking['rating_id']): ?>
-                                    <!-- Already Rated -->
                                     <div class="text-right">
                                         <h3 class="text-sm font-medium text-gray-700 mb-2">Your Rating:</h3>
                                         <div class="static-stars text-2xl">
@@ -152,7 +155,6 @@ $stmt->close();
                                         <?php endif; ?>
                                     </div>
                                 <?php else: ?>
-                                    <!-- Rating Form -->
                                     <form action="submit_rating.php" method="POST">
                                         <input type="hidden" name="booking_id" value="<?php echo $booking['booking_id']; ?>">
                                         <input type="hidden" name="provider_id" value="<?php echo $booking['provider_id']; ?>">
