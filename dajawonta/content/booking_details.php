@@ -1,6 +1,7 @@
 <?php
 session_start();
 // Go up one directory to include the database connection
+// Make sure '../db.php' is the correct path from this file's location
 include '../db.php'; 
 
 // --- Initialize variables for messages ---
@@ -299,9 +300,10 @@ $current_date = date('Y-m-d');
 
                                         <?php
                                         // --- Show "Mark as Completed" button ---
+                                        // This button is shown only if the booking is 'approved' AND the end date has passed.
                                         if (strtolower($booking['booking_status']) == 'approved' && $booking['booking_date_to'] < $current_date) : 
                                         ?>
-                                            <!-- This form submits to this same page -->
+                                            <!-- This form submits to this same page to trigger the POST logic at the top -->
                                             <form action="booking_details.php" method="POST" class="inline-block ml-4" onsubmit="return confirm('Are you sure you want to mark this booking as completed?');">
                                                 <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">
                                                 <input type="hidden" name="new_status" value="completed">
@@ -326,8 +328,15 @@ $current_date = date('Y-m-d');
 
     <!-- --- Toast Notification Script --- -->
     <script>
+        /**
+         * Displays a toast notification.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error'.
+         */
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
+            if (!container) return;
+            
             const toast = document.createElement('div');
             
             let iconClass = 'fa-check-circle';
@@ -356,15 +365,19 @@ $current_date = date('Y-m-d');
                 toast.classList.add('hide');
                 // Remove from DOM after transition
                 toast.addEventListener('transitionend', () => {
-                    toast.remove();
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
                 });
             }, 4000);
         }
 
         // --- Check for PHP messages and show toasts ---
+        // This PHP block will run on page load and check if the $success_message
+        // or $error_message variables were set by the POST handling logic.
         <?php
         if (!empty($success_message)) {
-            // Use addslashes to escape special characters for JavaScript
+            // Use addslashes to escape special characters (like quotes) for JavaScript
             echo "showToast('" . addslashes($success_message) . "', 'success');";
         }
         if (!empty($error_message)) {
