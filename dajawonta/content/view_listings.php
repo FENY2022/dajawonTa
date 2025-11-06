@@ -200,7 +200,16 @@ function render_stars($rating) {
         }
         .service-details p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; color: #4b5563; }
         .service-details i { width: 20px; text-align: center; margin-right: 0.75rem; color: var(--primary); padding-top: 3px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 50; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 50; padding: 1rem; }
+        /* Add modal content styling */
+        .modal-content { background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background-color: #f9fafb; text-align: right; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-medium; color: #374151; }
+        .form-input { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .form-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3); }
+        
         .toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 60; display: flex; flex-direction: column-reverse; gap: 1rem; }
         .toast { opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease; }
         .toast.show { opacity: 1; transform: translateY(0); }
@@ -296,7 +305,70 @@ function render_stars($rating) {
         <?php endif; ?>
     </div>
 
-    <div id="editModal" class="hidden modal-overlay"></div>
+    <div id="editModal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <form id="edit-service-form" method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                <input type="hidden" name="action" value="update_service">
+                <input type="hidden" name="service_id" id="edit-service-id">
+
+                <div class="modal-header">
+                    <h3 class="text-lg font-medium text-gray-900">Edit Service Details</h3>
+                    <button type="button" class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('editModal').classList.add('hidden')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="modal-body space-y-4">
+                    <div>
+                        <label for="edit-company-name" class="form-label">Company Name</label>
+                        <input type="text" id="edit-company-name" name="company_name" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="edit-company-address" class="form-label">Company Address</label>
+                        <input type="text" id="edit-company-address" name="company_address" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="edit-service-description" class="form-label">Service Description</label>
+                        <textarea id="edit-service-description" name="service_description" rows="4" class="form-input" required></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="edit-date-from" class="form-label">Available Date From</label>
+                            <input type="date" id="edit-date-from" name="available_date_from" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="edit-date-to" class="form-label">Available Date To</label>
+                            <input type="date" id="edit-date-to" name="available_date_to" class="form-input" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="edit-time-from" class="form-label">Available Time From</label>
+                            <input type="time" id="edit-time-from" name="available_time_from" class="form-input" required>
+                        </div>
+                        <div>
+                            <label for="edit-time-to" class="form-label">Available Time To</label>
+                            <input type="time" id="edit-time-to" name="available_time_to" class="form-input" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="edit-price" class="form-label">Price (₱)</label>
+                        <input type="number" id="edit-price" name="price" class="form-input" step="0.01" min="0" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer space-x-3">
+                    <button type="button" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md font-medium hover:bg-gray-50"
+                            onclick="document.getElementById('editModal').classList.add('hidden')">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-indigo-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <div id="cancelModal" class="hidden modal-overlay"></div>
     <div id="toast-container" class="toast-container pointer-events-none"></div>
 
@@ -314,7 +386,7 @@ function render_stars($rating) {
         const toastContainer = document.getElementById('toast-container');
         const editModal = document.getElementById('editModal');
         const showEditModalLinks = document.querySelectorAll('.show-edit-modal');
-        const editForm = document.getElementById('edit-service-form'); // Assuming this ID exists in your unprovided modal HTML
+        const editForm = document.getElementById('edit-service-form'); // This ID now exists in the modal HTML
 
         // Logic for Edit Modal
         showEditModalLinks.forEach(link => {
@@ -346,6 +418,7 @@ function render_stars($rating) {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const serviceId = this.getAttribute('data-service-id');
+                // You will need to add the HTML for your cancel modal, but this logic will work with it
                 const confirmButton = cancelModal.querySelector('#confirmCancel'); // Assumes this ID exists in your modal
                 if(confirmButton) {
                     confirmButton.href = `cancel_service.php?id=${serviceId}`;
@@ -429,6 +502,8 @@ function render_stars($rating) {
         [editModal, cancelModal].forEach(modal => {
             if (modal) {
                 modal.addEventListener('click', function(e) {
+                    // We check e.target to make sure we're clicking the overlay
+                    // and not the modal content itself (which would bubble up)
                     if (e.target === this) {
                         this.classList.add('hidden');
                     }
