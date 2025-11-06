@@ -105,12 +105,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
 }
 
 // If no actions were handled, proceed to fetch data for displaying the page.
+// --- MODIFIED SQL QUERY ---
 $sql = "SELECT 
-            id, service_name, company_name, company_address, service_description, is_approved,
-            available_date_from, available_date_to, available_time_from, available_time_to, price,
-            is_available
-        FROM service_providers 
-        WHERE user_id = ?";
+            sp.id, sp.service_name, sp.company_name, sp.company_address, sp.service_description, sp.is_approved,
+            sp.available_date_from, sp.available_date_to, sp.available_time_from, sp.available_time_to, sp.price,
+            sp.is_available,
+            COALESCE(AVG(pr.rating), 0) AS average_rating,
+            COUNT(pr.id) AS rating_count
+        FROM 
+            service_providers AS sp
+        LEFT JOIN 
+            provider_ratings AS pr ON sp.id = pr.provider_id
+        WHERE 
+            sp.user_id = ?
+        GROUP BY
+            sp.id, sp.service_name, sp.company_name, sp.company_address, sp.service_description, sp.is_approved,
+            sp.available_date_from, sp.available_date_to, sp.available_time_from, sp.available_time_to, sp.price,
+            sp.is_available";
 
 $stmt = $conn->prepare($sql);
 if ($stmt === false) { die("Error preparing statement: " . $conn->error); }
@@ -120,6 +131,30 @@ $result = $stmt->get_result();
 $services = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 $conn->close();
+
+// --- NEW HELPER FUNCTION ---
+/**
+ * Renders star icons based on a rating.
+ * @param float $rating The average rating.
+ * @return string The HTML for the stars.
+ */
+function render_stars($rating) {
+    $stars_html = '';
+    $full_stars = floor($rating);
+    $half_star = ($rating - $full_stars) >= 0.5;
+    $empty_stars = 5 - $full_stars - ($half_star ? 1 : 0);
+
+    for ($i = 0; $i < $full_stars; $i++) {
+        $stars_html .= '<i class="fas fa-star text-yellow-400"></i>';
+    }
+    if ($half_star) {
+        $stars_html .= '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+    }
+    for ($i = 0; $i < $empty_stars; $i++) {
+        $stars_html .= '<i class="far fa-star text-gray-300"></i>'; // Use 'far' for empty
+    }
+    return $stars_html;
+}
 ?>
 
 <!DOCTYPE html>
@@ -185,11 +220,22 @@ $conn->close();
                 <?php foreach ($services as $service): ?>
                     <div class="card p-6">
                         <div class="flex-grow">
-                             <div class="flex items-center mb-4">
-                                <div class="bg-indigo-100 text-primary p-3 rounded-full mr-4"><i class="fas fa-concierge-bell fa-lg"></i></div>
+                             <div class="flex items-center mb-2"> <div class="bg-indigo-100 text-primary p-3 rounded-full mr-4"><i class="fas fa-concierge-bell fa-lg"></i></div>
                                 <h2 class="text-2xl font-semibold text-gray-800"><?php echo htmlspecialchars($service['service_name']); ?></h2>
                             </div>
                            
+                            <div class="mb-4 pl-16"> <?php if ($service['rating_count'] > 0): ?>
+                                    <div class="flex items-center" title="Rated <?php echo number_format($service['average_rating'], 1); ?> out of 5">
+                                        <div class="flex items-center space-x-0.5">
+                                            <?php echo render_stars($service['average_rating']); ?>
+                                        </div>
+                                        <span class="ml-2 text-sm font-medium text-gray-700"><?php echo number_format($service['average_rating'], 1); ?></span>
+                                        <span class="ml-1 text-sm text-gray-500">(<?php echo $service['rating_count']; ?> rating<?php echo $service['rating_count'] > 1 ? 's' : ''; ?>)</span>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-sm text-gray-500">No ratings yet</span>
+                                <?php endif; ?>
+                            </div>
                             <?php if ($service['is_approved'] == 0): ?>
                                 <div class="mb-4 p-2 text-sm text-yellow-800 rounded-lg bg-yellow-100 flex items-center" role="alert"><i class="fas fa-clock fa-sm mr-2"></i><span class="font-medium">Status:</span>&nbsp;Pending Approval</div>
                             <?php else: ?>
@@ -268,12 +314,13 @@ $conn->close();
         const toastContainer = document.getElementById('toast-container');
         const editModal = document.getElementById('editModal');
         const showEditModalLinks = document.querySelectorAll('.show-edit-modal');
-        const editForm = document.getElementById('edit-service-form');
+        const editForm = document.getElementById('edit-service-form'); // Assuming this ID exists in your unprovided modal HTML
 
         // Logic for Edit Modal
         showEditModalLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
+                // Assumes your modal has inputs with these IDs
                 document.getElementById('edit-service-id').value = this.dataset.id;
                 document.getElementById('edit-company-name').value = this.dataset.companyName;
                 document.getElementById('edit-company-address').value = this.dataset.companyAddress;
@@ -299,7 +346,7 @@ $conn->close();
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const serviceId = this.getAttribute('data-service-id');
-                const confirmButton = cancelModal.querySelector('#confirmCancel');
+                const confirmButton = cancelModal.querySelector('#confirmCancel'); // Assumes this ID exists in your modal
                 if(confirmButton) {
                     confirmButton.href = `cancel_service.php?id=${serviceId}`;
                 }
@@ -377,6 +424,17 @@ $conn->close();
                 setTimeout(() => toast.remove(), 400);
             }, 5000);
         }
+
+        // Close modals when clicking outside
+        [editModal, cancelModal].forEach(modal => {
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            }
+        });
     });
 </script>
 </body>
