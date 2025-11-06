@@ -10,7 +10,7 @@ define('PAYMONGO_SECRET_KEY', 'sk_test_96buPr5S5wCEGUSjiEizVgMx'); // ✅ Use SE
 // define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
 // define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
 
-define('SITE_BASE_URL', 'http://dajawonta.online'); 
+define('SITE_BASE_URL', 'https://dajawonta.online'); 
 
 
 // Enable detailed error display for debugging (only for UAT)
