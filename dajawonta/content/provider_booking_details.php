@@ -8,7 +8,7 @@ define('PAYMONGO_SECRET_KEY', 'sk_test_96buPr5S5wCEGUSjiEizVgMx'); // ✅ Use SE
 // NOTE: I've updated the SITE_BASE_URL to point to the base dashboard path,
 // but the success/cancel URLs will need to be correctly configured for your environment.
 // define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
-define('SITE_BASE_URL', 'http://localhost/dajawonTa/dajawonta/'); 
+define('SITE_BASE_URL', 'http://dajawonta.online'); 
 
 
 // Enable detailed error display for debugging (only for UAT)
