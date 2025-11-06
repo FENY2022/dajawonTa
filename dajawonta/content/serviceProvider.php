@@ -15,6 +15,7 @@
             --success: #28a745; /* Green for available */
             --gray: #6c757d;
             --light-gray: #e9ecef;
+            --warning-star: #f39c12; /* Yellow/Gold for stars */
             --border-radius: 12px;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --transition: all 0.3s ease;
@@ -46,7 +47,31 @@
         .provider-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
         .card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
         .company-avatar { width: 60px; height: 60px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.5rem; flex-shrink: 0; }
+        
+        /* MODIFIED: Wrapper for Name + Rating */
+        .company-info {
+            display: flex;
+            flex-direction: column;
+        }
         .company-name { font-size: 1.5rem; font-weight: 700; color: var(--primary-dark); }
+        
+        /* NEW: Rating Styles */
+        .rating-stars {
+            font-size: 0.9rem;
+            color: var(--warning-star);
+        }
+        .rating-stars .rating-text {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+        .rating-stars .no-rating {
+            font-style: italic;
+            color: var(--gray);
+        }
+        /* END NEW STYLES */
+
         .card-body { border-top: 1px solid var(--light-gray); padding-top: 15px; flex-grow: 1; }
         .card-body p { margin-bottom: 0; }
         .company-address { color: var(--gray); font-size: 0.9rem; margin-bottom: 15px; }
@@ -99,19 +124,39 @@
                 <?php
                 require '../db.php';
                 
-                $sql = "SELECT * FROM service_providers";
+                // --- MODIFIED SQL QUERY ---
+                // We use a LEFT JOIN to get rating data (average and count)
+                // for each provider. We join on a subquery that groups ratings by provider.
+                $sql = "SELECT 
+                            sp.*, 
+                            r.avg_rating, 
+                            r.rating_count
+                        FROM 
+                            service_providers AS sp
+                        LEFT JOIN 
+                            (SELECT 
+                                 provider_id, 
+                                 AVG(rating) as avg_rating, 
+                                 COUNT(id) as rating_count 
+                             FROM 
+                                 provider_ratings 
+                             GROUP BY 
+                                 provider_id
+                            ) AS r ON sp.id = r.provider_id";
+                // --- END MODIFIED SQL ---
+
                 $params = [];
                 $types = "";
-                $where_clauses = ["is_approved = 1"]; // Base condition: only show approved providers
+                $where_clauses = ["sp.is_approved = 1"]; // Base condition: only show approved providers (aliased 'sp')
 
                 if (isset($_GET['service_id']) && !empty($_GET['service_id'])) {
-                    $where_clauses[] = "service_id = ?";
+                    $where_clauses[] = "sp.service_id = ?"; // aliased 'sp'
                     $params[] = $_GET['service_id'];
                     $types .= "i";
                 }
                 if (isset($_GET['service_name']) && !empty($_GET['service_name'])) {
                     $service_name_input = '%' . $_GET['service_name'] . '%';
-                    $where_clauses[] = "service_name LIKE ?";
+                    $where_clauses[] = "sp.service_name LIKE ?"; // aliased 'sp'
                     $params[] = $service_name_input;
                     $types .= "s";
                 }
@@ -143,10 +188,54 @@
 
                 echo '<div class="provider-card">';
                 echo '<div class="provider-id">ID: ' . htmlspecialchars($row['id']) . '</div>';
+                
+                // --- MODIFIED CARD HEADER ---
                 echo '<div class="card-header">';
                 echo '<div class="company-avatar">' . substr(htmlspecialchars($row['company_name']), 0, 1) . '</div>';
+                
+                // Wrapper for name and rating
+                echo '<div class="company-info">'; 
                 echo '<h3 class="company-name">' . htmlspecialchars($row['company_name']) . '</h3>';
-                echo '</div>';
+
+                // --- NEW: RATING STARS LOGIC ---
+                // These values come from the new SQL query
+                $avg_rating = $row['avg_rating'] ?? 0;
+                $rating_count = $row['rating_count'] ?? 0;
+
+                echo '<div class="rating-stars">';
+                if ($rating_count > 0) {
+                    $full_stars = floor($avg_rating);
+                    $half_star = ($avg_rating - $full_stars) >= 0.5 ? 1 : 0;
+                    $empty_stars = 5 - $full_stars - $half_star;
+
+                    // 1. Print Full Stars
+                    for ($j = 0; $j < $full_stars; $j++) {
+                        echo '<i class="fas fa-star"></i>';
+                    }
+                    // 2. Print Half Star
+                    if ($half_star) {
+                        echo '<i class="fas fa-star-half-alt"></i>';
+                    }
+                    // 3. Print Empty Stars
+                    for ($j = 0; $j < $empty_stars; $j++) {
+                        echo '<i class="far fa-star"></i>';
+                    }
+                    
+                    // 4. Print Text (e.g., "4.5 (10 reviews)")
+                    $review_text = ($rating_count == 1) ? 'review' : 'reviews';
+                    echo '<span class="rating-text">' . number_format($avg_rating, 1) . ' (' . $rating_count . ' ' . $review_text . ')</span>';
+
+                } else {
+                    // Case for no ratings
+                    echo '<span class="rating-text no-rating">No ratings yet</span>';
+                }
+                echo '</div>'; // end .rating-stars
+                // --- END RATING LOGIC ---
+
+                echo '</div>'; // end .company-info
+                echo '</div>'; // end .card-header
+                // --- END MODIFIED CARD HEADER ---
+
                 echo '<div class="card-body">';
                 echo '<span class="service-badge">' . htmlspecialchars($row['service_name']) . '</span>';
                 

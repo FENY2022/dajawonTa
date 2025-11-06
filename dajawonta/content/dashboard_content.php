@@ -21,22 +21,38 @@ function getWelcomeMessage($role) {
 
 // Function to get stats based on role
 function getStats($role, $conn, $userID) {
+    
+    // Helper function for prepared statements (COUNT)
+    $fetchCount = function($conn, $sql, $params = [], $types = "") {
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) { return 0; } // Handle error
+        if ($params && $types) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        return $row['count'] ?? 0;
+    };
+
+    // Helper function for single value (SUM, AVG)
+    $fetchValue = function($conn, $sql, $params = [], $types = "") {
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) { return 0; } // Handle error
+        if ($params && $types) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        // Assuming the alias is 'value'
+        return $row['value'] ?? 0;
+    };
+
     switch ($role) {
         case '0': // Client
-            // Helper function for prepared statements
-            $fetchCount = function($conn, $sql, $params = [], $types = "") {
-                $stmt = $conn->prepare($sql);
-                if (!$stmt) { return 0; } // Handle error
-                if ($params && $types) {
-                    $stmt->bind_param($types, ...$params);
-                }
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $row = $result->fetch_assoc();
-                $stmt->close();
-                return $row['count'] ?? 0;
-            };
-
             // Active Bookings: 'pending', 'approved', 'rescheduled'
             $activeBookingsSql = "SELECT COUNT(*) as count FROM bookings WHERE customer_id = ? AND booking_status IN ('pending', 'approved', 'rescheduled')";
             $activeBookings = $fetchCount($conn, $activeBookingsSql, [$userID], "i");
@@ -60,20 +76,59 @@ function getStats($role, $conn, $userID) {
                 ['icon' => 'fa-comments', 'value' => $reviewsSubmitted, 'label' => 'Reviews Submitted', 'color' => 'purple']
             ];
             
-        case '1': // Provider (Placeholders)
+        case '1': // Provider (Dynamic Data)
+            // Active Listings: Count of provider's own approved services
+            $activeListingsSql = "SELECT COUNT(*) as count FROM service_providers WHERE user_id = ? AND is_approved = 1";
+            $activeListings = $fetchCount($conn, $activeListingsSql, [$userID], "i");
+
+            // Pending Bookings: Count of bookings for the provider's services that are 'pending'
+            $pendingBookingsSql = "SELECT COUNT(*) as count FROM bookings 
+                                   WHERE booking_status = 'pending' 
+                                   AND provider_id IN (SELECT id FROM service_providers WHERE user_id = ?)";
+            $pendingBookings = $fetchCount($conn, $pendingBookingsSql, [$userID], "i");
+
+            // Average Rating: Average rating across all of the provider's services
+            $avgRatingSql = "SELECT AVG(rating) as value FROM provider_ratings 
+                             WHERE provider_id IN (SELECT id FROM service_providers WHERE user_id = ?)";
+            $avgRating = $fetchValue($conn, $avgRatingSql, [$userID], "i");
+            $avgRatingFormatted = ($avgRating > 0) ? number_format($avgRating, 1) . '/5' : 'N/A';
+
+            // Earnings (Month): Sum of 'total_price' for 'paid' bookings this month for the provider
+            $earningsSql = "SELECT SUM(total_price) as value FROM bookings 
+                            WHERE payment_status = 'paid' 
+                            AND MONTH(created_at) = MONTH(CURRENT_DATE()) 
+                            AND YEAR(created_at) = YEAR(CURRENT_DATE()) 
+                            AND provider_id IN (SELECT id FROM service_providers WHERE user_id = ?)";
+            $earnings = $fetchValue($conn, $earningsSql, [$userID], "i");
+            $earningsFormatted = '₱' . number_format($earnings, 2);
+
             return [
-                ['icon' => 'fa-briefcase', 'value' => '5', 'label' => 'Active Listings', 'color' => 'blue'],
-                ['icon' => 'fa-calendar-check', 'value' => '3', 'label' => 'Pending Bookings', 'color' => 'yellow'],
-                ['icon' => 'fa-star', 'value' => '4.8/5', 'label' => 'Average Rating', 'color' => 'green'],
-                ['icon' => 'fa-wallet', 'value' => '₱7,500', 'label' => 'Earnings (Month)', 'color' => 'purple']
+                ['icon' => 'fa-briefcase', 'value' => $activeListings, 'label' => 'Active Listings', 'color' => 'blue'],
+                ['icon' => 'fa-calendar-check', 'value' => $pendingBookings, 'label' => 'Pending Bookings', 'color' => 'yellow'],
+                ['icon' => 'fa-star', 'value' => $avgRatingFormatted, 'label' => 'Average Rating', 'color' => 'green'],
+                ['icon' => 'fa-wallet', 'value' => $earningsFormatted, 'label' => 'Earnings (Month)', 'color' => 'purple']
             ];
-        case '2': // Admin (Placeholders)
+            
+        case '2': // Admin (Dynamic Data)
+            // Total Users
+            $totalUsers = $fetchCount($conn, "SELECT COUNT(*) as count FROM users");
+            
+            // Listed Services (from the 'services' table which defines service types)
+            $listedServices = $fetchCount($conn, "SELECT COUNT(*) as count FROM services");
+            
+            // Total Bookings
+            $totalBookings = $fetchCount($conn, "SELECT COUNT(*) as count FROM bookings");
+            
+            // Pending Reports (Interpreted as Pending Bookings)
+            $pendingReports = $fetchCount($conn, "SELECT COUNT(*) as count FROM bookings WHERE booking_status = 'pending'");
+
             return [
-                ['icon' => 'fa-users', 'value' => '152', 'label' => 'Total Users', 'color' => 'blue'],
-                ['icon' => 'fa-tools', 'value' => '45', 'label' => 'Listed Services', 'color' => 'yellow'],
-                ['icon' => 'fa-book', 'value' => '210', 'label' => 'Total Bookings', 'color' => 'green'],
-                ['icon' => 'fa-exclamation-triangle', 'value' => '3', 'label' => 'Pending Reports', 'color' => 'red']
+                ['icon' => 'fa-users', 'value' => $totalUsers, 'label' => 'Total Users', 'color' => 'blue'],
+                ['icon' => 'fa-tools', 'value' => $listedServices, 'label' => 'Listed Services', 'color' => 'yellow'],
+                ['icon' => 'fa-book', 'value' => $totalBookings, 'label' => 'Total Bookings', 'color' => 'green'],
+                ['icon' => 'fa-exclamation-triangle', 'value' => $pendingReports, 'label' => 'Pending Reports', 'color' => 'red']
             ];
+            
         default: return [];
     }
 }
