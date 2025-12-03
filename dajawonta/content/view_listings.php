@@ -511,6 +511,7 @@ function render_stars($rating) {
             }
         });
     });
+    
 </script>
 </body>
 </html>

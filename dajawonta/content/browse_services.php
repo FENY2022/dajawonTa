@@ -222,5 +222,6 @@ $dashboard_link = 'dashboard.php';
             closeModalBtn.addEventListener('click', closeModal);
         });
     </script>
+    
 </body>
 </html>

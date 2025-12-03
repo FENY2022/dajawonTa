@@ -473,5 +473,6 @@ $conn->close();
             closeModalBtn.addEventListener('click', closeModal);
         });
     </script>
+    
 </body>
 </html>
